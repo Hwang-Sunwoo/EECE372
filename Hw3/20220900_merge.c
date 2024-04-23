@@ -200,7 +200,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "SUB r8, %[right], %[mid]\n\t" //getting b
         "CMP r5, r8\n\t" //j < b
         "BGE end_merge\n\t" //return
-        "B copty_right\n\t"
+        "B copy_right\n\t"
         
         
         "copy_left:\n\t"
