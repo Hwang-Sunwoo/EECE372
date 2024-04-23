@@ -20,9 +20,6 @@ int main(int argc, const char * argv[]) {
     presort(array, n);
     shuffle(array, post_C, post_ASM, n);
     
-
-    
-    
     clock_gettime(CLOCK_MONOTONIC, &C_start_time); //the time until the start time
     insertion_C(post_C, n);
     clock_gettime(CLOCK_MONOTONIC, &C_end_time); //the time until the end time
@@ -110,7 +107,7 @@ void insertion_ASM(int arr[], int num){
         
         "MOV r4, #1\n\t"          // i = 1;
         "LDR r5, #0\n\t"        // r5 = 0
-        "LDR r5, [%[arr], r5]"  // r5 = &arr[0]
+        "LDR r5, [%[arr], r5]\n\t"  // r5 = &arr[0]
         "LDR r3, %[num]\n\t"        // r3 = num
         "CMP r3, #1\n\t"          // if (num <= 1)
         "BLE L1\n\t"
