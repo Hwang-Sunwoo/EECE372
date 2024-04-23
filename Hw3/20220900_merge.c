@@ -186,6 +186,8 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "B copy_right\n\t"
         
         "update_k:\n\t"
+        "CMP r6, %[right]\n\t" //k <= right
+        "BGE end_merge\n\t"
         "ADD r6, r6, #1\n\t" //k++
         "B merge_loop\n\t" //continue
         
@@ -235,6 +237,7 @@ void mergesort_C(int arr[], int left, int right){
         mergesort_C(arr, mid + 1, right);
         
         merge_C(arr, left, mid, right);
+        
         for(i = 0; i < right - left + 1; i++){
             printf("%d ", arr[left + i]);
         }
