@@ -13,6 +13,7 @@ int main(int argc, const char * argv[]) {
     double spent_time_C, spent_time_ASM;
     struct timespec C_start_time, C_end_time, ASM_start_time, ASM_end_time;
     
+    //scanf("%d", &n);
     n = atoi(argv[1]);
     int array[n], post_C[n], post_ASM[n];
     
@@ -27,12 +28,11 @@ int main(int argc, const char * argv[]) {
     clock_gettime(CLOCK_MONOTONIC, &C_end_time); //the time until the end time
     spent_time_C = (C_end_time.tv_sec - C_start_time.tv_sec) + (C_end_time.tv_nsec - C_start_time.tv_nsec) / 1e9; //the time spent during bubble
     
-    /*
+    
     clock_gettime(CLOCK_MONOTONIC, &ASM_start_time); //the time until the start time
     insertion_ASM(post_ASM, n);
     clock_gettime(CLOCK_MONOTONIC, &ASM_end_time); //the time until the end time
     spent_time_ASM = (ASM_end_time.tv_sec - ASM_start_time.tv_sec) + (ASM_end_time.tv_nsec - ASM_start_time.tv_nsec) / 1e9; //the time spent during bubble
-    */
     
     if(n <= 20){
         
@@ -58,7 +58,7 @@ int main(int argc, const char * argv[]) {
         printf("]\n");
     }
     printf("Execution Time    (C): %.6f[s]\n", spent_time_C);
-    //printf("Execution Time (ASM): %.6f[s]\n", spent_time_ASM);
+    printf("Execution Time (ASM): %.6f[s]\n", spent_time_ASM);
 
     
     return 0;
@@ -103,36 +103,82 @@ void insertion_C(int arr[], int num){
     }
     return;
 }
-/*
-void insertion_ASM(int arr[], int num){
-    
-    asm(
-        "mov r4, #1\n\t" // i = 1;
-        "movl %[num], r5\n\t" // r5 = num
-        "loop_start:\n"
-            "movl (%%edi, %1, 4), %%eax\n" // eax = arr[i]
-            "mov %%edi, %%esi\n" // esi = i
-            "cmp $0, %%esi\n" // if (j >= 1)
-            "jge inner_loop:\n"
-            "jmp loop_end:\n" // else break;
-            "inner_loop:\n"
-                "movl (%%esi, %1, 4), %%ebx\n" // ebx = arr[j]
-                "cmp %%eax, %%ebx\n" // if (arr[j - 1] > arr[i])
-                "jle loop_end:\n" // break;
-                "movl %%ebx, (%%esi, %1, 4)\n" // arr[j] = arr[j - 1];
-                "sub $1, %%esi\n" // j--;
-                "cmp $0, %%esi\n" // if (j >= 1)
-                "jge inner_loop:\n"
-            "loop_end:\n"
-            "mov %%eax, (%%esi, %1, 4)\n" // arr[j] = v;
-            "add $1, %%edi\n" // i++;
-            "cmp %%ecx, %%edi\n" // if (i < num)
-            "jl loop_start:\n"
-        :
-        : "r" (num), "r" (arr)
-        : "%eax", "%ebx", "%ecx", "%edi", "%esi"
-        );
 
-    return;
-}
+void insertion_ASM(int arr[], int num){
+    /*
+    asm(
+        // r1: arr / r0: num
+        // r4: i / r5: arr / r3: num
+        //
+        "PUSH {r4, r5, lr}\n\t" // 레지스터 보존
+        
+        "MOV r4, #1\n\t"          // i = 1;
+        "LDR r5, [r1]\n\t"        // r5 = &arr[0]
+        "LDR r3, [r0]\n\t"        // r3 = num
+        "CMP r3, #1\n\t"          // if (num <= 1)
+        "BLE L1\n\t"
+        
+    "L2:\n\t"
+        "LDR r2, [r5, r4, lsl #2]\n\t" // r2 = arr[i]
+        "MOV r6, r4\n\t"              // j = i;
+        "CMP r6, #0\n\t"              // if (j >= 1)
+        "BLT L4\n\t"
+        
+    "L3:\n\t"
+        "LDR r1, [r5, r6, lsl #2]\n\t" // r1 = arr[j]
+        "CMP r1, r2\n\t"              // if (arr[j - 1] <= arr[i])
+        "BLE L4\n\t"
+        "STR r1, [r5, r6, lsl #2]\n\t" // arr[j] = arr[j - 1];
+        "SUBS r6, r6, #1\n\t"          // j--;
+        "CMP r6, #0\n\t"               // if (j >= 1)
+        "BGE L3\n\t"
+        
+    "L4:\n\t"
+        "STR r2, [r5, r6, lsl #2]\n\t" // arr[j] = v;
+        "ADDS r4, r4, #1\n\t"          // i++;
+        "CMP r4, r3\n\t"               // if (i < num)
+        "BLT L2\n\t"
+        
+    "L1:\n\t"
+
+        "POP {r4, r5, pc}\n\t" // 레지스터 복원 및 리턴
+        );
 */
+    asm(
+        "PUSH {r4, r5, lr}\n\t" // 레지스터 보존
+        
+        "MOV r4, #1\n\t"          // i = 1;
+        "LDR r5, #0\n\t"        // r5 = 0
+        "LDR r5, [%[arr], r5]"  // r5 = &arr[0]
+        "LDR r3, %[num]\n\t"        // r3 = num
+        "CMP r3, #1\n\t"          // if (num <= 1)
+        "BLE L1\n\t"
+        //for(){
+    "L2:\n\t"
+        "LDR r2, [r5, r4]\n\t" // r2 = arr[i]
+        "MOV r6, r4\n\t"              // j = i;
+        "CMP r6, #0\n\t"              // if (j >= 1)
+        "BLT L4\n\t"
+        //while(){
+    "L3:\n\t"
+        "LDR r1, [r5, r6]\n\t" // r1 = arr[j]
+        "CMP r1, r2\n\t"              // if (arr[j - 1] <= arr[i])
+        "BLE L4\n\t"
+        "STR r1, [r5, r6]\n\t" // arr[j] = arr[j - 1];
+        "SUBS r6, r6, #1\n\t"          // j--;
+        "CMP r6, #0\n\t"               // if (j >= 1)
+        "BGE L3\n\t"
+        //}
+    "L4:\n\t"
+        "STR r2, [r5, r6]\n\t" // arr[j] = v;
+        "ADDS r4, r4, #1\n\t"          // i++;
+        "CMP r4, r3\n\t"               // if (i < num)
+        "BLT L2\n\t"
+        //}
+    "L1:\n\t"
+
+        "POP {r4, r5, pc}\n\t" // 레지스터 복원 및 리턴
+        );
+        return;
+}
+
