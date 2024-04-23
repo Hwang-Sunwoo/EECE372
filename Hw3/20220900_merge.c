@@ -4,8 +4,9 @@
 
 void presort(int arr[], int num);
 void shuffle(int arr[], int arr1[], int arr2[], int num);
-void insertion_C(int arr[], int num);
-void insertion_ASM(int arr[], int num);
+void merge_C(int arr[], int left, int mid, int right);
+void mergesort_C(int arr[], int left, int right);
+void merge_ASM(int arr[], int left, int mid, int right);
 int main(int argc, const char * argv[]) {
 
     
@@ -19,17 +20,16 @@ int main(int argc, const char * argv[]) {
     presort(array, n);
     shuffle(array, post_C, post_ASM, n);
     
-
     
     
     clock_gettime(CLOCK_MONOTONIC, &C_start_time); //the time until the start time
-    insertion_C(post_C, n);
+    mergesort_C(post_C, 0, n - 1);
     clock_gettime(CLOCK_MONOTONIC, &C_end_time); //the time until the end time
     spent_time_C = (C_end_time.tv_sec - C_start_time.tv_sec) + (C_end_time.tv_nsec - C_start_time.tv_nsec) / 1e9; //the time spent during bubble
     
     /*
     clock_gettime(CLOCK_MONOTONIC, &ASM_start_time); //the time until the start time
-    insertion_ASM(post_ASM, n);
+    merge_ASM(post_ASM, n);
     clock_gettime(CLOCK_MONOTONIC, &ASM_end_time); //the time until the end time
     spent_time_ASM = (ASM_end_time.tv_sec - ASM_start_time.tv_sec) + (ASM_end_time.tv_nsec - ASM_start_time.tv_nsec) / 1e9; //the time spent during bubble
     */
@@ -89,50 +89,72 @@ void shuffle(int arr[], int arr1[], int arr2[], int num){
     
     return;
 }
-void insertion_C(int arr[], int num){
+void merge_C(int arr[], int left, int mid, int right){
 
-    int i, j, v;
-    for(i = 1; i <= num - 1; i++){
-        v = arr[i];
-        j = i;
-        while(arr[j - 1] > v && j >= 1){
-            arr[j] = arr[j - 1];
-            j--;
-        }
-        arr[j] = v;
+    int i, j, k;
+    int a = mid - left + 1;
+    int b = right - mid;
+    int L[a], R[b];
+    
+    for(i = 0; i < a; i++){
+        L[i] = arr[left + i];
     }
+    for(j = 0; j < b; j++){
+        R[j] = arr[mid + 1 + j];
+    }
+    
+    i = 0;
+    j = 0;
+    k = left;
+    while(i < a && j < b){
+        if(L[i] <= R[j]){
+            arr[k] = L[i];
+            i++;
+        }else{
+            arr[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+    while(i < a){
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
+    while(j < b){
+        arr[k] = R[j];
+        j++;
+        k++;
+    }
+    
+    
+    return;
+}
+
+void mergesort_C(int arr[], int left, int right){
+    
+    int mid;
+    
+    if(left < right){
+        mid = left + (right - left) / 2;
+        mergesort_C(arr, left, mid);
+        mergesort_C(arr, mid + 1, right);
+        
+        merge_C(arr, left, mid, right);
+    }
+    
     return;
 }
 /*
-void insertion_ASM(int arr[], int num){
-    
-    asm(
-        "mov r4, #1\n\t" // i = 1;
-        "movl %[num], r5\n\t" // r5 = num
-        "loop_start:\n"
-            "movl (%%edi, %1, 4), %%eax\n" // eax = arr[i]
-            "mov %%edi, %%esi\n" // esi = i
-            "cmp $0, %%esi\n" // if (j >= 1)
-            "jge inner_loop:\n"
-            "jmp loop_end:\n" // else break;
-            "inner_loop:\n"
-                "movl (%%esi, %1, 4), %%ebx\n" // ebx = arr[j]
-                "cmp %%eax, %%ebx\n" // if (arr[j - 1] > arr[i])
-                "jle loop_end:\n" // break;
-                "movl %%ebx, (%%esi, %1, 4)\n" // arr[j] = arr[j - 1];
-                "sub $1, %%esi\n" // j--;
-                "cmp $0, %%esi\n" // if (j >= 1)
-                "jge inner_loop:\n"
-            "loop_end:\n"
-            "mov %%eax, (%%esi, %1, 4)\n" // arr[j] = v;
-            "add $1, %%edi\n" // i++;
-            "cmp %%ecx, %%edi\n" // if (i < num)
-            "jl loop_start:\n"
-        :
-        : "r" (num), "r" (arr)
-        : "%eax", "%ebx", "%ecx", "%edi", "%esi"
-        );
+void merge_ASM(int arr[], int left, int mid, int right){
 
-    return;
+    asm(
+        
+        
+        
+        
+        
+        
+        )
 }
 */
