@@ -100,44 +100,41 @@ void insertion_C(int arr[], int num){
     }
     return;
 }void insertion_ASM(int arr[], int num){
-    asm(
         // r2: i / r3 j /
         // r5: v / r6: j + 1 / r1: arr[j]
-        "MOV r2, #1\n\t" // i = 1;
+    asm(
+        "mov r2, #1\n"                      // i = 1
+        "start_for:\n\t"
         
-        "start_for:\n\t" //for(){
+        "cmp r2, %[num]\n\t"                  // Compare i and n
+        "bge end_func\n\t"                     // If i >= n, go to end_i
         
-            "CMP r2, %[num]\n\t" // i < num
-            "BGE end_func\n\t" //for(){}
-            "LDR r5, [%[arr], r2, LSL #2]\n\t" // v = arr[i]
-            "SUB r3, r2, #1\n\t" //j = i - 1
-            
-        "start_while:\n\t" //while(){
+        "ldr r5, [%[arr], r2, LSL #2]\n\t"    // key = a[i] (Load with offset)
+        "sub r3, r2, #1\n"                  // j = i - 1
         
-            "CMP r3, #0\n\t" //j >= 1
-            "BLT end_while\n\t" //while(){}
-           
-            "LDR r1, [%[arr], r3, LSL #2]\n\t" //arr[j]
-            "CMP r1, r5\n\t" //arr[j] > v
-            "BLE end_while\n\t" //while(){}
-            
-            "ADD r6, r3, #1\n\t"
-            "STR r1, [%[arr], r6, LSL #2]\n\t" //arr[j + 1] = arr[j]
-            "SUB r3, r3, #1\n\t" //j--
-            "B start_while\n\t" //while(){
+        "start_while:\n\t"
+        "cmp r3, #0\n\t"                    // Compare j and 0
+        "blt end_while\n\t"                  // If j < 0, go to update_a
+        
+        "ldr r1, [%[arr], r3, LSL #2]\n\t"    // temp = a[j]
+        "cmp r1, r5\n\t"                    // Compare temp and key
+        "ble end_while\n\t"                  // If temp <= key, go to update_a
+        
+        "add r6, r3, #1\n\t"
+        "str r1, [%[arr], r6, LSL #2]\n\t"    // a[j + 1] = a[j]
+        "sub r3, r3, #1\n\t"                // j = j - 1
+        "b start_while\n"                        // Continue loop_j
         
         "end_while:\n\t"
-            "ADD r3, r3, #1\n\t"
-            "STR r5, [%[num], r3, LSL #2]\n\t" //arr[j] = v
-            "ADD r2, r2, #1\n\t" //i++
-            "B start_for\n\t" //for()
-            
-        "end_func:\n\t"
+        "add r3, r3, #1\n\t"
+        "str r5, [%[arr], r3, LSL #2]\n\t"    // a[j + 1] = key
+        "add r2, r2, #1\n\t"
+        "b start_for\n"                        // Continue loop_i
         
-        :
-        : [arr] "r"(arr), [num] "r"(num)
-        : "r1", "r2", "r3", "r5", "r6"
+        "end_i:\n\t"                        // Label for end of loop
+        :                                   // input operands
+        : [num] "r"(num), [arr] "r"(arr)            // output operands
+        : "r1", "r2", "r3", "r6", "r5"      // List of clobbered registers
         );
-    
         return;
 }
