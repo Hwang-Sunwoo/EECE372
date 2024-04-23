@@ -230,7 +230,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
 
 void mergesort_C(int arr[], int left, int right){
     
-    int mid, i;
+    int mid;
     
     if(left < right){
         mid = left + (right - left) / 2;
@@ -238,10 +238,7 @@ void mergesort_C(int arr[], int left, int right){
         mergesort_C(arr, mid + 1, right);
         
         merge_C(arr, left, mid, right);
-        for(i = 0; i < right - left + 1; i++){
-            printf("%d ", arr[left + i]);
-        }
-        printf("\n 야호 \n");
+
     }
     
     
@@ -286,18 +283,15 @@ void mergesort_ASM(int arr[], int left, int right){
 }
 */
 void mergesort_ASM(int arr[], int left, int right){
-        int mid, i;
+        int mid;
         
         if(left < right){
             mid = left + (right - left) / 2;
-            mergesort_C(arr, left, mid);
-            mergesort_C(arr, mid + 1, right);
+            mergesort_ASM(arr, left, mid);
+            mergesort_ASM(arr, mid + 1, right);
             
             merge_ASM(arr, left, right, mid);
-            for(i = 0; i < right - left + 1; i++){
-                printf("%d ", arr[left + i]);
-            }
-            printf("\n 메롱 \n");
+
         }
         
         return;
