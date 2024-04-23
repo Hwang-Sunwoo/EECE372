@@ -133,7 +133,7 @@ asm(
         
         "end_while:\n\t"
             "STR r5, [r7, r3, LSL #2]\n\t" //arr[j] = v
-            "ADD r2, #1\n\t" //i++
+            "ADD r2, r2, #1\n\t" //i++
             "B start_for\n\t" //for()
             
         "end_func:\n\t"
