@@ -136,25 +136,25 @@ void merge_ASM(int arr[], int left, int right, int mid) {
     int *RA;
     LA = (int*)malloc(sizeof(int) * (mid - left + 1));
     RA = (int*)malloc(sizeof(int) * right - mid);
-    // r0: arr / r1: left / r2: right / r3: mid
     // r4: i / r5: j / r6: k
     // LA: left array / RA: right array
     // r8 / r9
     asm(
+        "MOV r4, #0\n\t" //i = 0
+        "MOV r5, #0\n\t" //j = 0
+
         "left_array:\n\t"//for(i = 0; i < a; i++){
-        "MOV r4, #0\n\t" //i=0
         "SUB r8, %[mid], %[left]\n\t"
         "ADD r8, r8, #1\n\t" //a = mid - left + 1
         "CMP r4, r8\n\t" //i < a
         "BGE right_array\n\t" //for(j = 0; j < b; j++){
         "ADD r8, %[left], r4\n\t" //left + i
-        "LDR r8, [%[arr], r8, LSL #2]\n\t" //arr[left + i]
-        "STR r8, [%[LA], r4]\n\t" //L[i] = arr[left + i]
+        "LDR r9, [%[arr], r8, LSL #2]\n\t" //arr[left + i]
+        "STR r9, [%[LA], r4]\n\t" //L[i] = arr[left + i]
         "ADD r4, #1\n\t" //i++
         "B left_array\n\t" //continue
         
         "right_array:\n\t" //for(j = 0; j < b; j++){
-        "MOV r5, #0\n\t" //j = 0
         "SUB r8, %[right], %[mid]\n\t" //b = right - mid
         "CMP r5, r8\n\t" //j < b
         "BGE merge_loop\n\t" //while(i < a && j < b){
@@ -220,6 +220,9 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         : [arr] "r"(arr), [left] "r"(left), [mid] "r"(mid), [right] "r"(right), [LA] "r"(LA), [RA] "r"(RA)
         : "r4", "r5", "r6", "r8", "r9"
     );
+    free(LA);
+    free(RA);
+    return;
 }
 
 void mergesort_C(int arr[], int left, int right){
