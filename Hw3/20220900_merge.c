@@ -161,7 +161,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "right_array:\n\t"
         "MOV r5, #0\n\t"
         "CMP r5, %[b]\n\t"
-        "BGE merge_loop"
+        "BGE merge_loop\n\t"
         "ADD r8, %[mid], #1\n\t"
         "ADD r8, r9, r5\n\t"
         "LDR r8, [%[arr], r8, LSL #2]\n\t"
@@ -187,7 +187,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "B copy_right\n\t"
         
         "update_k:\n\t"
-        "ADD, r6, r6, #1\n\t"
+        "ADD r6, r6, #1\n\t"
         "B merge_loop\n\t"
         
 
