@@ -108,7 +108,8 @@ void insertion_ASM(int arr[], int num){
         // r5: v / r6: arr[j] / r7: arr / r1: arr[j - 1]
         "MOV r2, #1\n\t" // i = 1;
         "LDR r7, %[arr]\n\t" //r7 = arr
-        "CMP %[num], #1\n\t" //num <= 1
+        "LDR r2, %[num]\n\t"
+        "CMP r2, #1\n\t" //num <= 1
         "BLE end_func\n\t" //return
         
         "start_for:\n\t" //for(){
