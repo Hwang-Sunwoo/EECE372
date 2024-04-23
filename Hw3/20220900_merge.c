@@ -141,78 +141,78 @@ void merge_ASM(int arr[], int left, int right, int mid) {
     // LA: left array / RA: right array
     // r8 / r9
     asm(
-        "left_array:\n\t"
-        "MOV r4, #0\n\t"
-        "SUB r8, %[mid], %[right]\n\t"
-        "ADD r8, r8, #1\n\t"
-        "CMP r4, r8\n\t"
-        "BGE right_array\n\t"
-        "ADD r8, %[left], r4\n\t"
-        "LDR r8, [%[arr], r8, LSL #2]\n\t"
-        "STR r8, [%[LA], r4]\n\t"
+        "left_array:\n\t"//for(i = 0; i < a; i++){
+        "MOV r4, #0\n\t" //i=0
+        "SUB r8, %[mid], %[left]\n\t"
+        "ADD r8, r8, #1\n\t" //a = mid - left + 1
+        "CMP r4, r8\n\t" //i < a
+        "BGE right_array\n\t" //for(j = 0; j < b; j++){
+        "ADD r8, %[left], r4\n\t" //left + i
+        "LDR r8, [%[arr], r8, LSL #2]\n\t" //arr[left + i]
+        "STR r8, [%[LA], r4]\n\t" //L[i] = arr[left + i]
         "ADD r4, #1\n\t" //i++
-        "B left_array\n\t"
+        "B left_array\n\t" //continue
         
-        "right_array:\n\t"
-        "MOV r5, #0\n\t"
-        "SUB r8, %[right], %[mid]\n\t"
-        "CMP r5, r8\n\t"
-        "BGE merge_loop\n\t"
-        "ADD r8, %[mid], #1\n\t"
-        "ADD r8, r9, r5\n\t"
-        "LDR r8, [%[arr], r8, LSL #2]\n\t"
-        "STR r8, [%[RA], r5]\n\t"
-        "ADD r5, r5, #1\n\t"
-        "B right_array\n\t"
+        "right_array:\n\t" //for(j = 0; j < b; j++){
+        "MOV r5, #0\n\t" //j = 0
+        "SUB r8, %[right], %[mid]\n\t" //b = right - mid
+        "CMP r5, r8\n\t" //j < b
+        "BGE merge_loop\n\t" //while(i < a && j < b){
+        "ADD r8, %[mid], #1\n\t" //mid + 1
+        "ADD r8, r9, r5\n\t" //mid + 1 + j
+        "LDR r8, [%[arr], r8, LSL #2]\n\t" //arr[mid + 1 + j]
+        "STR r8, [%[RA], r5]\n\t" //R[j] = arr[mid + 1+j]
+        "ADD r5, r5, #1\n\t" //j++
+        "B right_array\n\t" //continue
         
-        "MOV r4, #0\n\t"
-        "MOV r5, #0\n\t"
-        "MOV r6, %[left]\n\t"
+        "MOV r4, #0\n\t" //i = 0
+        "MOV r5, #0\n\t" //j = 0
+        "MOV r6, %[left]\n\t" //k = left
         
         // 왼쪽 배열과 오른쪽 배열을 병합하면서 임시 배열에 저장
-        "merge_loop:\n\t"
-        "SUB r8, %[mid], %[right]\n\t"
-        "ADD r8, r8, #1\n\t"
-            "CMP r4, r8\n\t"
-            "BGE compare_left\n\t"
-        "SUB r8, %[right], %[mid]\n\t"
-            "CMP r5, r8\n\t"
-            "BGE compare_left\n\t"
+        "merge_loop:\n\t" //while(i < a && j < b){
+        "SUB r8, %[mid], %[left]\n\t"
+        "ADD r8, r8, #1\n\t" //getting a
+            "CMP r4, r8\n\t" //i < a
+            "BGE compare_left\n\t" //go while(i < a){
+        "SUB r8, %[right], %[mid]\n\t" //getting b
+            "CMP r5, r8\n\t" //j < b
+            "BGE compare_left\n\t" //go while(i < a)
         
-        "LDR r8, [%[LA], r4]\n\t"
-        "LDR r9, [%[RA], r5]\n\t"
-        "CMP r8, r9\n\t"
-        "BLT copy_left\n\t"
+        "LDR r8, [%[LA], r4]\n\t" //L[i]
+        "LDR r9, [%[RA], r5]\n\t" //R[j]
+        "CMP r8, r9\n\t" //L[i] <= R[j]
+        "BLE copy_left\n\t"
         "B copy_right\n\t"
         
         "update_k:\n\t"
-        "ADD r6, r6, #1\n\t"
-        "B merge_loop\n\t"
+        "ADD r6, r6, #1\n\t" //k++
+        "B merge_loop\n\t" //continue
         
 
-        "compare_left:\n\t"
-        "SUB r8, %[mid], %[right]\n\t"
-        "ADD r8, r8, #1\n\t"
-        "CMP r4, r8\n\t"
-        "BGE compare_right\n\t"
+        "compare_left:\n\t" //while(i < a){
+        "SUB r8, %[mid], %[left]\n\t"
+        "ADD r8, r8, #1\n\t" //getting a
+        "CMP r4, r8\n\t" //i < a
+        "BGE compare_right\n\t" //while(j < b)
         "B copy_left\n\t"
         
-        "compare_right:\n\t"
-        "SUB r8, %[right], %[mid]\n\t"
-        "CMP r5, r8\n\t"
-        "BGE end_merge\n\t"
+        "compare_right:\n\t" //while(j < b)
+        "SUB r8, %[right], %[mid]\n\t" //getting b
+        "CMP r5, r8\n\t" //j < b
+        "BGE end_merge\n\t" //return
         
         
         "copy_left:\n\t"
-        "LDR r8, [%[LA], r4]\n\t"
-        "STR r8, [%[arr], r6, LSL #2]\n\t"
-        "ADD r4, r4, #1\n\t"
+        "LDR r8, [%[LA], r4]\n\t" //L[i]
+        "STR r8, [%[arr], r6, LSL #2]\n\t" //arr[k] = L[i]
+        "ADD r4, r4, #1\n\t" //i++
         "B update_k\n\t"
         
         "copy_right:\n\t"
-        "LDR r8, [%[RA], r5]\n\t"
-        "STR r8, [%[arr], r6, LSL #2]\n\t"
-        "ADD r5, r5, #1\n\t"
+        "LDR r8, [%[RA], r5]\n\t" //R[j]
+        "STR r8, [%[arr], r6, LSL #2]\n\t" //arr[k] = R[j]
+        "ADD r5, r5, #1\n\t" //j++
         "B update_k\n\t"
         
         "end_merge:\n\t"
