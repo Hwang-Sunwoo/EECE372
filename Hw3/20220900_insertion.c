@@ -102,7 +102,7 @@ void insertion_C(int arr[], int num){
 }
 
 void insertion_ASM(int arr[], int num){
-    asm(
+    /*asm(
         // r2: i / r3 j / r4: j - 1 / r8: num
         // r5: v / r6: arr[j] / r7: arr / r1: arr[j - 1]
         "MOV r2, #1\n\t" // i = 1;
@@ -140,9 +140,41 @@ void insertion_ASM(int arr[], int num){
         :
         : [arr] "r"(arr), [num] "r"(num)
         : "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"
+        );*/
+
+                asm(
+        "mov r1, #1\n"                      // i = 1
+        "loop_i:\n\t"
+        
+        "cmp r1, %[n]\n\t"                  // Compare i and n
+        "bge end_i\n\t"                     // If i >= n, go to end_i
+        
+        "ldr r3, [%[a], r1, LSL #2]\n\t"    // key = a[i] (Load with offset)
+        "sub r2, r1, #1\n"                  // j = i - 1
+        
+        "loop_j:\n\t"
+        "cmp r2, #0\n\t"                    // Compare j and 0
+        "blt update_a\n\t"                  // If j < 0, go to update_a
+        
+        "ldr r4, [%[a], r2, LSL #2]\n\t"    // temp = a[j]
+        "cmp r4, r3\n\t"                    // Compare temp and key
+        "ble update_a\n\t"                  // If temp <= key, go to update_a
+        
+        "add r5, r2, #1\n\t"
+        "str r4, [%[a], r5, LSL #2]\n\t"    // a[j + 1] = a[j]
+        "sub r2, r2, #1\n\t"                // j = j - 1
+        "b loop_j\n"                        // Continue loop_j
+        
+        "update_a:\n\t"
+        "add r2, r2, #1\n\t"
+        "str r3, [%[a], r2, LSL #2]\n\t"    // a[j + 1] = key
+        "add r1, r1, #1\n\t"
+        "b loop_i\n"                        // Continue loop_i
+        
+        "end_i:\n\t"                        // Label for end of loop
+        :                                   // input operands
+        : [n] "r"(n), [a] "r"(a)            // output operands
+        : "r1", "r2", "r3", "r4", "r5"      // List of clobbered registers
         );
-    
-        return;
-}
         return;
 }
