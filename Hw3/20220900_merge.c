@@ -179,8 +179,8 @@ void merge_ASM(int arr[], int left, int right, int mid) {
             "CMP r5, r8\n\t" //j < b
             "BGE compare_left\n\t" //go while(i < a)
         
-        "LDR r8, [%[LA], r4]\n\t" //L[i]
-        "LDR r9, [%[RA], r5]\n\t" //R[j]
+        "LDR r8, [%[LA], r4, LSL #2]\n\t" //L[i]
+        "LDR r9, [%[RA], r5, LSL #2]\n\t" //R[j]
         "CMP r8, r9\n\t" //L[i] <= R[j]
         "BLE copy_left\n\t"
         "B copy_right\n\t"
@@ -189,7 +189,6 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "ADD r6, r6, #1\n\t" //k++
         "B merge_loop\n\t" //continue
         
-
         "compare_left:\n\t" //while(i < a){
         "SUB r8, %[mid], %[left]\n\t"
         "ADD r8, r8, #1\n\t" //getting a
@@ -201,16 +200,17 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "SUB r8, %[right], %[mid]\n\t" //getting b
         "CMP r5, r8\n\t" //j < b
         "BGE end_merge\n\t" //return
+        "B copty_right\n\t"
         
         
         "copy_left:\n\t"
-        "LDR r8, [%[LA], r4]\n\t" //L[i]
+        "LDR r8, [%[LA], r4, LSL #2]\n\t" //L[i]
         "STR r8, [%[arr], r6, LSL #2]\n\t" //arr[k] = L[i]
         "ADD r4, r4, #1\n\t" //i++
         "B update_k\n\t"
         
         "copy_right:\n\t"
-        "LDR r8, [%[RA], r5]\n\t" //R[j]
+        "LDR r8, [%[RA], r5, LSL #2]\n\t" //R[j]
         "STR r8, [%[arr], r6, LSL #2]\n\t" //arr[k] = R[j]
         "ADD r5, r5, #1\n\t" //j++
         "B update_k\n\t"
