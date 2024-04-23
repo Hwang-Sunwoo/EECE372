@@ -171,19 +171,21 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         
         // 왼쪽 배열과 오른쪽 배열을 병합하면서 임시 배열에 저장
         "merge_loop:\n\t" //while(i < a && j < b){
-        "SUB r8, %[mid], %[left]\n\t"
-        "ADD r8, r8, #1\n\t" //getting a
+            "SUB r8, %[mid], %[left]\n\t"
+            "ADD r8, r8, #1\n\t" //getting a
             "CMP r4, r8\n\t" //i < a
             "BGE compare_right\n\t" //go while(j < b){
-        "SUB r8, %[right], %[mid]\n\t" //getting b
+            "SUB r8, %[right], %[mid]\n\t" //getting b
             "CMP r5, r8\n\t" //j < b
             "BGE compare_left\n\t" //go while(i < a)
         
-        "LDR r8, [%[LA], r4, LSL #2]\n\t" //L[i]
-        "LDR r9, [%[RA], r5, LSL #2]\n\t" //R[j]
-        "CMP r8, r9\n\t" //L[i] <= R[j]
-        "BLE copy_left\n\t"
-        "B copy_right\n\t"
+            "LDR r8, [%[LA], r4, LSL #2]\n\t" //L[i]
+            "LDR r9, [%[RA], r5, LSL #2]\n\t" //R[j]
+            "CMP r8, r9\n\t" //L[i] <= R[j]
+            "BLE copy_left\n\t"
+            "B copy_right\n\t"
+            
+            "B end_merge\n\t"
         
         "update_k:\n\t"
         "CMP r6, %[right]\n\t" //k <= right
