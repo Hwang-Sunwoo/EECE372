@@ -163,7 +163,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "LDR r8, [%[arr], r8, LSL #2]\n\t"
         "STR r8, [%[RA], r5]\n\t"
         "ADD r5, r5, #1\n\t"
-        "B rigth_array\n\t"
+        "B right_array\n\t"
         
         "MOV r4, #0\n\t"
         "MOV r5, #0\n\t"
@@ -174,7 +174,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "SUB r8, %[mid], %[right]\n\t"
         "ADD r8, r8, #1\n\t"
             "CMP r4, r8\n\t"
-            "BGE compare\n\t"
+            "BGE compare_left\n\t"
         "SUB r8, %[right], %[mid]\n\t"
             "CMP r5, r8\n\t"
             "BGE compare_left\n\t"
@@ -215,7 +215,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "ADD r5, r5, #1\n\t"
         "B update_k\n\t"
         
-
+        "end_merge:\n\t"
         :
         : [arr] "r"(arr), [left] "r"(left), [mid] "r"(mid), [right] "r"(right), [LA] "r"(LA), [RA] "r"(RA)
         : "r4", "r5", "r6", "r8", "r9"
