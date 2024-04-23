@@ -104,16 +104,16 @@ void insertion_C(int arr[], int num){
 void insertion_ASM(int arr[], int num){
     
     asm(
-        // r2: i / r3 j / r4: j - 1
+        // r2: i / r3 j / r4: j - 1 / r8: num
         // r5: v / r6: arr[j] / r7: arr / r1: arr[j - 1]
         "MOV r2, #1\n\t" // i = 1;
         "LDR r7, %[arr]\n\t" //r7 = arr
-        "LDR r2, %[num]\n\t"
-        "CMP r2, #1\n\t" //num <= 1
+        "LDR r8, %[num]\n\t"
+        "CMP r8, #1\n\t" //num <= 1
         "BLE end_func\n\t" //return
         
         "start_for:\n\t" //for(){
-            "CMP r2, #[num]\n\t" // i < num
+            "CMP r2, r8\n\t" // i < num
             "BGE end_func\n\t" //for(){}
             "LDR r5, [r7, r2, LSL #2]\n\t" // v = arr[i]
             "MOV r3, r2\n\t" //j = i
