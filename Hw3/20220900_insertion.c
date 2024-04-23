@@ -102,7 +102,8 @@ void insertion_C(int arr[], int num){
 }
 
 void insertion_ASM(int arr[], int num){
-        asm(
+    /*    
+    asm(
         // r1: arr / r0: num
         // r4: i / r5: arr / r3: num
         //
@@ -139,9 +140,8 @@ void insertion_ASM(int arr[], int num){
 
         "POP {r4, r5, pc}\n\t" // 레지스터 복원 및 리턴
         );
-/*
-asm(
-        "PUSH {r4, r5, lr}\n\t" // 레지스터 보존
+    */
+    asm(
         
         "MOV r4, #1\n\t"          // i = 1;
         "LDR r5, #0\n\t"        // r5 = 0
@@ -151,35 +151,31 @@ asm(
         "BLE L1\n\t"
         //for(){
     "L2:\n\t"
-        "LDR r2, [r5, r4]\n\t" // r2 = arr[i]
+        "LDR r2, [r5, r4, LSL #2]\n\t" // r2 = arr[i]
         "MOV r6, r4\n\t"              // j = i;
         "CMP r6, #0\n\t"              // if (j >= 1)
         "BLT L4\n\t"
         //while(){
     "L3:\n\t"
-        "LDR r1, [r5, r6]\n\t" // r1 = arr[j]
-        "CMP r1, r2\n\t"              // if (arr[j - 1] <= arr[i])
+        "LDR r7, [r5, r6, LSL #2]\n\t" // r1 = arr[j]
+        "CMP r7, r2\n\t"              // if (arr[j - 1] <= arr[i])
         "BLE L4\n\t"
-        "STR r1, [r5, r6]\n\t" // arr[j] = arr[j - 1];
+        "STR r7, [r5, r6, LSL #2]\n\t" // arr[j] = arr[j - 1];
         "SUBS r6, r6, #1\n\t"          // j--;
         "CMP r6, #0\n\t"               // if (j >= 1)
         "BGE L3\n\t"
         //}
     "L4:\n\t"
-        "STR r2, [r5, r6]\n\t" // arr[j] = v;
+        "STR r2, [r5, r6, LSL #2]\n\t" // arr[j] = v;
         "ADDS r4, r4, #1\n\t"          // i++;
         "CMP r4, r3\n\t"               // if (i < num)
         "BLT L2\n\t"
         //}
     "L1:\n\t"
 
-        "POP {r4, r5, pc}\n\t" // 레지스터 복원 및 리턴
-
         : // 출력 (output) 부분은 없으므로 비워둡니다.
-        : [arr] "r"(arr), [num] "m"(num) // 입력 (input) 목록에 arr과 num을 추가합니다.
-        : "r2", "r3", "r4", "r5", "r6" // 어셈블리어 코드에서 사용된 레지스터들을 나열합니다.
-    
+                : [arr] "r"(arr), [num] "r"(num) // 입력 (input) 목록에 arr과 num을 추가합니다.
+                : "r2", "r3", "r4", "r5", "r6" // 어셈블리어 코드에서 사용된 레지스터들을 나열합니다.
         );
-*/
         return;
 }
