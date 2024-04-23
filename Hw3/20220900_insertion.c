@@ -102,80 +102,43 @@ void insertion_C(int arr[], int num){
 }
 
 void insertion_ASM(int arr[], int num){
-    /*    
+    
     asm(
-        // r1: arr / r0: num
-        // r4: i / r5: arr / r3: num
-        //
-        "PUSH {r4, r5, lr}\n\t" // 레지스터 보존
+        // r2: i / r3 j / r4: j - 1
+        // r5: v / r6: arr[j] / r7: arr / r1: arr[j - 1]
+        "MOV r2, #1\n\t" // i = 1;
+        "LDR r7, %[arr]\n\t" //r7 = arr
+        "CMP %[num], #1\n\t" //num <= 1
+        "BLE end_func\n\t" //return
         
-        "MOV r4, #1\n\t"          // i = 1;
-        "LDR r5, [r1]\n\t"        // r5 = &arr[0]
-        "LDR r3, [r0]\n\t"        // r3 = num
-        "CMP r3, #1\n\t"          // if (num <= 1)
-        "BLE L1\n\t"
+        "start_for:\n\t" //for(){
+            "CMP r2, #[num]\n\t" // i < num
+            "BGE end_func\n\t" //for(){}
+            "LDR r5, [r7, r2, LSL #2]\n\t" // v = arr[i]
+            "MOV r3, r2\n\t" //j = i
+            
+        "start_while:\n\t" //while(){
+            "SUB r4, r3, #1\n\t" //j - 1
+            "LDR r1, [r7, r4]\n\t" //arr[j - 1]
+            "CMP r1, r5\n\t" //arr[j - 1] > v
+            "BLE end_while\n\t" //while(){}
+            
+            "CMP r3, #1\n\t" //j = 1
+            "BLT end_while\n\t" //while(){}
         
-    "L2:\n\t"
-        "LDR r2, [r5, r4, lsl #2]\n\t" // r2 = arr[i]
-        "MOV r6, r4\n\t"              // j = i;
-        "CMP r6, #0\n\t"              // if (j >= 1)
-        "BLT L4\n\t"
+            "STR r1, [r7, r3, LSL #2]\n\t" //arr[j] = arr[j - 1]
+            "SUB r3, r3, #1\n\t" //j--
         
-    "L3:\n\t"
-        "LDR r1, [r5, r6, lsl #2]\n\t" // r1 = arr[j]
-        "CMP r1, r2\n\t"              // if (arr[j - 1] <= arr[i])
-        "BLE L4\n\t"
-        "STR r1, [r5, r6, lsl #2]\n\t" // arr[j] = arr[j - 1];
-        "SUBS r6, r6, #1\n\t"          // j--;
-        "CMP r6, #0\n\t"               // if (j >= 1)
-        "BGE L3\n\t"
+        "end_while:\n\t"
+            "STR r5, [r7, r3, LSL #2]\n\t" //arr[j] = v
+            "ADD r2, #1\n\t" //i++
+            "B start_for\n\t" //for()
+            
+        "end_func:\n\t"
         
-    "L4:\n\t"
-        "STR r2, [r5, r6, lsl #2]\n\t" // arr[j] = v;
-        "ADDS r4, r4, #1\n\t"          // i++;
-        "CMP r4, r3\n\t"               // if (i < num)
-        "BLT L2\n\t"
-        
-    "L1:\n\t"
-
-        "POP {r4, r5, pc}\n\t" // 레지스터 복원 및 리턴
-        );
-    */
-    asm(
-        
-        "MOV r4, #1\n\t"          // i = 1;
-        "LDR r5, #0\n\t"        // r5 = 0
-        "LDR r5, [%[arr], r5]\n\t"  // r5 = &arr[0]
-        "LDR r3, %[num]\n\t"        // r3 = num
-        "CMP r3, #1\n\t"          // if (num <= 1)
-        "BLE L1\n\t"
-        //for(){
-    "L2:\n\t"
-        "LDR r2, [r5, r4, LSL #2]\n\t" // r2 = arr[i]
-        "MOV r6, r4\n\t"              // j = i;
-        "CMP r6, #0\n\t"              // if (j >= 1)
-        "BLT L4\n\t"
-        //while(){
-    "L3:\n\t"
-        "LDR r7, [r5, r6, LSL #2]\n\t" // r7 = arr[j]
-        "CMP r7, r2\n\t"              // if (arr[j - 1] <= arr[i])
-        "BLE L4\n\t"
-        "STR r7, [r5, r6, LSL #2]\n\t" // arr[j] = arr[j - 1];
-        "SUBS r6, r6, #1\n\t"          // j--;
-        "CMP r6, #0\n\t"               // if (j >= 1)
-        "BGE L3\n\t"
-        //}
-    "L4:\n\t"
-        "STR r2, [r5, r6, LSL #2]\n\t" // arr[j] = v;
-        "ADDS r4, r4, #1\n\t"          // i++;
-        "CMP r4, r3\n\t"               // if (i < num)
-        "BLT L2\n\t"
-        //}
-    "L1:\n\t"
-
-        : // 출력 (output) 부분은 없으므로 비워둡니다.
-                : [arr] "r"(arr), [num] "r"(num) // 입력 (input) 목록에 arr과 num을 추가합니다.
-                : "r2", "r3", "r4", "r5", "r6", "r7" // 어셈블리어 코드에서 사용된 레지스터들을 나열합니다.
+        :
+        : [arr] "r"(arr), [num] "r"(num)
+        : "r1", "r2", "r3", "r4", "r5", "r6", "r7"
         );
         return;
 }
