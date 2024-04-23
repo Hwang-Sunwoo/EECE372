@@ -102,7 +102,45 @@ void insertion_C(int arr[], int num){
 }
 
 void insertion_ASM(int arr[], int num){
-    asm(
+        asm(
+        // r1: arr / r0: num
+        // r4: i / r5: arr / r3: num
+        //
+        "PUSH {r4, r5, lr}\n\t" // 레지스터 보존
+        
+        "MOV r4, #1\n\t"          // i = 1;
+        "LDR r5, [r1]\n\t"        // r5 = &arr[0]
+        "LDR r3, [r0]\n\t"        // r3 = num
+        "CMP r3, #1\n\t"          // if (num <= 1)
+        "BLE L1\n\t"
+        
+    "L2:\n\t"
+        "LDR r2, [r5, r4, lsl #2]\n\t" // r2 = arr[i]
+        "MOV r6, r4\n\t"              // j = i;
+        "CMP r6, #0\n\t"              // if (j >= 1)
+        "BLT L4\n\t"
+        
+    "L3:\n\t"
+        "LDR r1, [r5, r6, lsl #2]\n\t" // r1 = arr[j]
+        "CMP r1, r2\n\t"              // if (arr[j - 1] <= arr[i])
+        "BLE L4\n\t"
+        "STR r1, [r5, r6, lsl #2]\n\t" // arr[j] = arr[j - 1];
+        "SUBS r6, r6, #1\n\t"          // j--;
+        "CMP r6, #0\n\t"               // if (j >= 1)
+        "BGE L3\n\t"
+        
+    "L4:\n\t"
+        "STR r2, [r5, r6, lsl #2]\n\t" // arr[j] = v;
+        "ADDS r4, r4, #1\n\t"          // i++;
+        "CMP r4, r3\n\t"               // if (i < num)
+        "BLT L2\n\t"
+        
+    "L1:\n\t"
+
+        "POP {r4, r5, pc}\n\t" // 레지스터 복원 및 리턴
+        );
+/*
+asm(
         "PUSH {r4, r5, lr}\n\t" // 레지스터 보존
         
         "MOV r4, #1\n\t"          // i = 1;
@@ -142,5 +180,6 @@ void insertion_ASM(int arr[], int num){
         : "r2", "r3", "r4", "r5", "r6" // 어셈블리어 코드에서 사용된 레지스터들을 나열합니다.
     
         );
+*/
         return;
 }
