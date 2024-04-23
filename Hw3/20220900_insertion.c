@@ -13,8 +13,8 @@ int main(int argc, const char * argv[]) {
     double spent_time_C, spent_time_ASM;
     struct timespec C_start_time, C_end_time, ASM_start_time, ASM_end_time;
     
-    scanf("%d", &n);
-    //n = atoi(argv[1]);
+    
+    n = atoi(argv[1]);
     int array[n], post_C[n], post_ASM[n];
     
     presort(array, n);
