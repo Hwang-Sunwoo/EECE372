@@ -178,6 +178,11 @@ void insertion_ASM(int arr[], int num){
     "L1:\n\t"
 
         "POP {r4, r5, pc}\n\t" // 레지스터 복원 및 리턴
+
+        : // 출력 (output) 부분은 없으므로 비워둡니다.
+        : [arr] "r"(arr), [num] "m"(num) // 입력 (input) 목록에 arr과 num을 추가합니다.
+        : "r2", "r3", "r4", "r5", "r6" // 어셈블리어 코드에서 사용된 레지스터들을 나열합니다.
+    
         );
         return;
 }
