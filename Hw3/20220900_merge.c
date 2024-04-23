@@ -135,7 +135,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
     int *LA;
     int *RA;
     LA = (int*)malloc(sizeof(int) * (mid - left + 1));
-    RA = (int*)malloc(sizeof(int) * right - mid);
+    RA = (int*)malloc(sizeof(int) * (right - mid));
     // r4: i / r5: j / r6: k
     // LA: left array / RA: right array
     // r8 / r9
@@ -231,7 +231,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
 
 void mergesort_C(int arr[], int left, int right){
     
-    int mid, i;
+    int mid;
     
     if(left < right){
         mid = left + (right - left) / 2;
@@ -239,11 +239,6 @@ void mergesort_C(int arr[], int left, int right){
         mergesort_C(arr, mid + 1, right);
         
         merge_C(arr, left, mid, right);
-        
-        for(i = 0; i < right - left + 1; i++){
-            printf("%d ", arr[left + i]);
-        }
-        printf("\n");
     }
     
     return;
