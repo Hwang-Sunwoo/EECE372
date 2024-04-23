@@ -157,7 +157,7 @@ void insertion_ASM(int arr[], int num){
         "BLT L4\n\t"
         //while(){
     "L3:\n\t"
-        "LDR r7, [r5, r6, LSL #2]\n\t" // r1 = arr[j]
+        "LDR r7, [r5, r6, LSL #2]\n\t" // r7 = arr[j]
         "CMP r7, r2\n\t"              // if (arr[j - 1] <= arr[i])
         "BLE L4\n\t"
         "STR r7, [r5, r6, LSL #2]\n\t" // arr[j] = arr[j - 1];
@@ -175,7 +175,7 @@ void insertion_ASM(int arr[], int num){
 
         : // 출력 (output) 부분은 없으므로 비워둡니다.
                 : [arr] "r"(arr), [num] "r"(num) // 입력 (input) 목록에 arr과 num을 추가합니다.
-                : "r2", "r3", "r4", "r5", "r6" // 어셈블리어 코드에서 사용된 레지스터들을 나열합니다.
+                : "r2", "r3", "r4", "r5", "r6", "r7" // 어셈블리어 코드에서 사용된 레지스터들을 나열합니다.
         );
         return;
 }
