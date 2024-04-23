@@ -154,18 +154,18 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "BGE right_array\n\t"
         "ADD r8, %[left], r4\n\t"
         "LDR r8, [%[arr], r8, LSL #2]\n\t"
-        "STR r8, [%[LA], r4, LSL #2]\n\t"
+        "STR r8, [%[LA], r4]\n\t"
         "ADD r4, #1\n\t" //i++
         "B left_array\n\t"
         
         "right_array:\n\t"
         "MOV r5, #0\n\t"
         "CMP r5, %[b]\n\t"
-        "BGE merge_loop\n\t"
+        "BGE merge_loop"
         "ADD r8, %[mid], #1\n\t"
         "ADD r8, r9, r5\n\t"
         "LDR r8, [%[arr], r8, LSL #2]\n\t"
-        "STR r8, [%[RA], r5, LSL #2]\n\t"
+        "STR r8, [%[RA], r5]\n\t"
         "ADD r5, r5, #1\n\t"
         "B rigth_array\n\t"
         
@@ -176,12 +176,12 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         // 왼쪽 배열과 오른쪽 배열을 병합하면서 임시 배열에 저장
         "merge_loop:\n\t"
             "CMP r4, %[a]\n\t"
-            "BGE compare_left\n\t"
+            "BGE compare\n\t"
             "CMP r5, %[b]\n\t"
             "BGE compare_left\n\t"
         
-        "LDR r8, [%[LA], r4, LSL #2]\n\t"
-        "LDR r9, [%[RA], r5, LSL #2]\n\t"
+        "LDR r8, [%[LA], r4]\n\t"
+        "LDR r9, [%[RA], r5]\n\t"
         "CMP r8, r9\n\t"
         "BLT copy_left\n\t"
         "B copy_right\n\t"
@@ -202,18 +202,18 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         
         
         "copy_left:\n\t"
-        "LDR r8, [%[LA], r4, LSL #2]\n\t"
+        "LDR r8, [%[LA], r4]\n\t"
         "STR r8, [%[arr], r6, LSL #2]\n\t"
         "ADD r4, r4, #1\n\t"
         "B update_k\n\t"
         
         "copy_right:\n\t"
-        "LDR r8, [%[RA], r5, LSL #2]\n\t"
+        "LDR r8, [%[RA], r5]\n\t"
         "STR r8, [%[arr], r6, LSL #2]\n\t"
         "ADD r5, r5, #1\n\t"
         "B update_k\n\t"
         
-        "end_merge:\n\t"
+
         :
         : [arr] "r"(arr), [left] "r"(left), [mid] "r"(mid), [right] "r"(right), [LA] "r"(LA), [RA] "r"(RA), [a] "r"(a), [b] "r"(b)
         : "r1", "r2", "r3", "r4", "r5", "r6", "r8", "r9"
@@ -234,6 +234,7 @@ void mergesort_C(int arr[], int left, int right){
     
     return;
 }
+/*
 void mergesort_ASM(int arr[], int left, int right){
     
     asm(
@@ -269,4 +270,18 @@ void mergesort_ASM(int arr[], int left, int right){
         : "r0", "r1", "r2", "r3", "r4"
         );
     return;
+}
+*/
+void mergesort_ASM(int arr[], int left, int right){
+        int mid;
+        
+        if(left < right){
+            mid = left + (right - left) / 2;
+            mergesort_C(arr, left, mid);
+            mergesort_C(arr, mid + 1, right);
+            
+            merge_ASM(arr, left, right, mid);
+        }
+        
+        return;
 }
