@@ -102,7 +102,7 @@ void insertion_C(int arr[], int num){
 }
 
 void insertion_ASM(int arr[], int num){
-    
+    /*
     asm(
         // r2: i / r3 j / r4: j - 1 / r8: num
         // r5: v / r6: arr[j] / r7: arr / r1: arr[j - 1]
@@ -134,6 +134,46 @@ void insertion_ASM(int arr[], int num){
             "STR r5, [r7, r3, LSL #2]\n\t" //arr[j] = v
             "ADD r2, #1\n\t" //i++
             "B start_for\n\t" //for()
+            
+        "end_func:\n\t"
+        
+        :
+        : [arr] "r"(arr), [num] "r"(num)
+        : "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"
+        );*/
+    
+    asm(
+        // r2: i / r3: j / r4: j - 1 / r8: num
+        // r5: v / r6: arr[j] / r7: arr / r1: arr[j - 1]
+        "MOV r2, #1\n\t" // i = 1;
+        "LDR r7, %[arr]\n\t" // r7 = arr
+        "LDR r8, %[num]\n\t" // r8 = num
+        "CMP r8, #1\n\t" // num <= 1
+        "BLE end_func\n\t" // return
+        
+        "start_for:\n\t" // for(){
+            "CMP r2, r8\n\t" // i < num
+            "BGE end_func\n\t" // for(){}
+            "LDR r5, [r7, r2, LSL #2]\n\t" // v = arr[i]
+            "MOV r3, r2\n\t" // j = i
+            
+        "start_while:\n\t" // while(){
+            "SUB r4, r3, #1\n\t" // j - 1
+            "CMP r3, #1\n\t" // j = 1
+            "BLT end_while\n\t" // while(){}
+            
+            "LDR r1, [r7, r4, LSL #2]\n\t" // arr[j - 1]
+            "CMP r1, r5\n\t" // arr[j - 1] > v
+            "BLE end_while\n\t" // while(){}
+            
+            "STR r1, [r7, r3, LSL #2]\n\t" // arr[j] = arr[j - 1]
+            "SUBS r3, r3, #1\n\t" // j--
+            "B start_while\n\t" // while(){}
+        
+        "end_while:\n\t"
+            "STR r5, [r7, r3, LSL #2]\n\t" // arr[j] = v
+            "ADD r2, r2, #1\n\t" // i++
+            "B start_for\n\t" // for()
             
         "end_func:\n\t"
         
