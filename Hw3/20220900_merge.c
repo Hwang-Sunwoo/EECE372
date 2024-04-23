@@ -134,23 +134,18 @@ void merge_ASM(int arr[], int left, int right, int mid) {
     
     int *LA;
     int *RA;
-    int a, b;
     LA = (int*)malloc(sizeof(int) * (mid - left + 1));
     RA = (int*)malloc(sizeof(int) * right - mid);
     // r0: arr / r1: left / r2: right / r3: mid
     // r4: i / r5: j / r6: k
     // LA: left array / RA: right array
     // r8 / r9
-    
     asm(
-
-        "SUB %[a], %[mid], %[right]\n\t"
-        "ADD %[a], %[a], #1\n\t"
-        "SUB %[b], %[right], %[mid]\n\t"
-        
         "left_array:\n\t"
         "MOV r4, #0\n\t"
-        "CMP r4, %[a]\n\t"
+        "SUB r8, %[mid], %[right]\n\t"
+        "ADD r8, r8, #1\n\t"
+        "CMP r4, r8\n\t"
         "BGE right_array\n\t"
         "ADD r8, %[left], r4\n\t"
         "LDR r8, [%[arr], r8, LSL #2]\n\t"
@@ -160,7 +155,8 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         
         "right_array:\n\t"
         "MOV r5, #0\n\t"
-        "CMP r5, %[b]\n\t"
+        "SUB r8, %[right], %[mid]\n\t"
+        "CMP r5, r8\n\t"
         "BGE merge_loop\n\t"
         "ADD r8, %[mid], #1\n\t"
         "ADD r8, r9, r5\n\t"
@@ -175,9 +171,12 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         
         // 왼쪽 배열과 오른쪽 배열을 병합하면서 임시 배열에 저장
         "merge_loop:\n\t"
-            "CMP r4, %[a]\n\t"
+        "SUB r8, %[mid], %[right]\n\t"
+        "ADD r8, r8, #1\n\t"
+            "CMP r4, r8\n\t"
             "BGE compare\n\t"
-            "CMP r5, %[b]\n\t"
+        "SUB r8, %[right], %[mid]\n\t"
+            "CMP r5, r8\n\t"
             "BGE compare_left\n\t"
         
         "LDR r8, [%[LA], r4]\n\t"
@@ -192,12 +191,15 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         
 
         "compare_left:\n\t"
-        "CMP r4, %[a]\n\t"
+        "SUB r8, %[mid], %[right]\n\t"
+        "ADD r8, r8, #1\n\t"
+        "CMP r4, r8\n\t"
         "BGE compare_right\n\t"
         "B copy_left\n\t"
         
         "compare_right:\n\t"
-        "CMP r5, %[b]\n\t"
+        "SUB r8, %[right], %[mid]\n\t"
+        "CMP r5, r8\n\t"
         "BGE end_merge\n\t"
         
         
@@ -215,8 +217,8 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         
 
         :
-        : [arr] "r"(arr), [left] "r"(left), [mid] "r"(mid), [right] "r"(right), [LA] "r"(LA), [RA] "r"(RA), [a] "r"(a), [b] "r"(b)
-        : "r1", "r2", "r3", "r4", "r5", "r6", "r8", "r9"
+        : [arr] "r"(arr), [left] "r"(left), [mid] "r"(mid), [right] "r"(right), [LA] "r"(LA), [RA] "r"(RA)
+        : "r4", "r5", "r6", "r8", "r9"
     );
 }
 
