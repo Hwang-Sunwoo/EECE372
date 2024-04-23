@@ -111,7 +111,7 @@ void insertion_ASM(int arr[], int num){
         "BLE end_func\n\t" //return
         
         "start_for:\n\t" //for(){
-            "CMP r2, #[num]\n\t" // i < num
+            "CMP r2, %[num]\n\t" // i < num
             "BGE end_func\n\t" //for(){}
             "LDR r5, [r7, r2, LSL #2]\n\t" // v = arr[i]
             "MOV r3, r2\n\t" //j = i
@@ -139,7 +139,7 @@ void insertion_ASM(int arr[], int num){
         
         :
         : [arr] "r"(arr), [num] "r"(num)
-        : "r1", "r2", "r3", "r4", "r5", "r6", "r7"
+        : "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"
         );
 
     
