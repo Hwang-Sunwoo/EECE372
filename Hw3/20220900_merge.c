@@ -29,12 +29,12 @@ int main(int argc, const char * argv[]) {
     clock_gettime(CLOCK_MONOTONIC, &C_end_time); //the time until the end time
     spent_time_C = (C_end_time.tv_sec - C_start_time.tv_sec) + (C_end_time.tv_nsec - C_start_time.tv_nsec) / 1e9; //the time spent during bubble
     
-    
+    /*
     clock_gettime(CLOCK_MONOTONIC, &ASM_start_time); //the time until the start time
     mergesort_ASM(post_ASM, 0, n - 1);
     clock_gettime(CLOCK_MONOTONIC, &ASM_end_time); //the time until the end time
     spent_time_ASM = (ASM_end_time.tv_sec - ASM_start_time.tv_sec) + (ASM_end_time.tv_nsec - ASM_start_time.tv_nsec) / 1e9; //the time spent during bubble
-    
+    */
     
     if(n <= 20){
         
@@ -130,6 +130,7 @@ void merge_C(int arr[], int left, int mid, int right){
     }
     return;
 }
+/*
 void merge_ASM(int arr[], int left, int mid, int right) {
     int *temp;
     asm(
@@ -194,7 +195,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         : "r7", "r8"
     );
 }
-
+*/
 void mergesort_C(int arr[], int left, int right){
     
     int mid;
@@ -209,6 +210,7 @@ void mergesort_C(int arr[], int left, int right){
     
     return;
 }
+/*
 void mergesort_ASM(int arr[], int left, int right){
     
     asm(
@@ -244,3 +246,4 @@ void mergesort_ASM(int arr[], int left, int right){
         "POP {r4, r5, r6, pc}\n\t" // 레지스터 복원 및 리턴
         );
 }
+*/
