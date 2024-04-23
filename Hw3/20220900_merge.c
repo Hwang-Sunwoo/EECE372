@@ -169,7 +169,6 @@ void merge_ASM(int arr[], int left, int right, int mid) {
         "MOV r5, #0\n\t" //j = 0
         "MOV r6, %[left]\n\t" //k = left
         
-        // 왼쪽 배열과 오른쪽 배열을 병합하면서 임시 배열에 저장
         "merge_loop:\n\t" //while(i < a && j < b){
             "SUB r8, %[mid], %[left]\n\t"
             "ADD r8, r8, #1\n\t" //getting a
@@ -231,7 +230,7 @@ void merge_ASM(int arr[], int left, int right, int mid) {
 
 void mergesort_C(int arr[], int left, int right){
     
-    int mid;
+    int mid, i;
     
     if(left < right){
         mid = left + (right - left) / 2;
@@ -239,7 +238,12 @@ void mergesort_C(int arr[], int left, int right){
         mergesort_C(arr, mid + 1, right);
         
         merge_C(arr, left, mid, right);
+        for(i = 0; i < right - left + 1; i++){
+            printf("%d ", arr[left + i]);
+        }
+        printf("\n 야호 \n");
     }
+    
     
     return;
 }
@@ -282,7 +286,7 @@ void mergesort_ASM(int arr[], int left, int right){
 }
 */
 void mergesort_ASM(int arr[], int left, int right){
-        int mid;
+        int mid, i;
         
         if(left < right){
             mid = left + (right - left) / 2;
@@ -290,6 +294,10 @@ void mergesort_ASM(int arr[], int left, int right){
             mergesort_C(arr, mid + 1, right);
             
             merge_ASM(arr, left, right, mid);
+            for(i = 0; i < right - left + 1; i++){
+                printf("%d ", arr[left + i]);
+            }
+            printf("\n 메롱 \n");
         }
         
         return;
