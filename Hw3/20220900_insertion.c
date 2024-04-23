@@ -103,13 +103,13 @@ void insertion_C(int arr[], int num){
         // r2: i / r3 j /
         // r5: v / r6: j + 1 / r1: arr[j]
     asm(
-        "MOV r2, #1\n" //i = 1;
+        "MOV r2, #1\n\t" //i = 1;
         "start_for:\n\t" //for(){
         
             "CMP r2, %[num]\n\t" // i < num
             "BGE end_func\n\t" //for(){}
             "LDR r5, [%[arr], r2, LSL #2]\n\t" //v = arr[i]
-            "SUB r3, r2, #1\n" // j = i - 1
+            "SUB r3, r2, #1\n\t" // j = i - 1
         
         "start_while:\n\t" //while(){
         
@@ -123,13 +123,13 @@ void insertion_C(int arr[], int num){
             "ADD r6, r3, #1\n\t"
             "STR r1, [%[arr], r6, LSL #2]\n\t" //arr[j + 1] = arr[j]
             "SUB r3, r3, #1\n\t"  //j--
-            "B start_while\n" //while(){
+            "B start_while\n\t" //while(){
         
         "end_while:\n\t"
             "ADD r3, r3, #1\n\t"
             "STR r5, [%[arr], r3, LSL #2]\n\t" //arr[j] = v
             "ADD r2, r2, #1\n\t" //i++
-            "B start_for\n" //for()
+            "B start_for\n\t" //for()
         
         "end_func:\n\t"    
         : // input operands
