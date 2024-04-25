@@ -232,7 +232,8 @@ void merge_ASM(int arr[], int left, int mid, int right) {
 
 void merge_ASM(int* a, int low, int mid, int high) {
     int leftIndex, rightIndex, tempIndex;
-    int* temp = (int*)malloc((high - low + 1) * sizeof(int)); // 임시 배열을 위한 메모리 할당
+    int* temp;
+    temp = (int*)malloc(sizeof(int) * (high - low + 1)); // 임시 배열을 위한 메모리 할당
     int n;
 
     asm (
@@ -373,7 +374,7 @@ void mergesort_ASM(int arr[], int left, int right){
         );
     return;
 }
-*/
+
 void mergesort_ASM(int arr[], int left, int right){
         int mid;
         
@@ -388,7 +389,7 @@ void mergesort_ASM(int arr[], int left, int right){
         
         return;
 }
-/*
+*/
 void mergesort_ASM(int* a, int low, int high) {
     asm(
         // Initialize registers r1, r2 only if they are not set (can use a flag or check if r1, r2 are zero)
@@ -435,4 +436,4 @@ void mergesort_ASM(int* a, int low, int high) {
         : "r0", "r1", "r2", "r3", "r4", "lr", "memory", "cc"  // clobbered: ªÁøÎµ» ∑π¡ˆΩ∫≈ÕøÕ ∏ﬁ∏∏Æ, ¡∂∞« ƒ⁄µÂ
         );
 }
-*/
+
