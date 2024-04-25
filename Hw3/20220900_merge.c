@@ -165,8 +165,8 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         "STR r9, [%[RA], r5, LSL #2]\n\t" //R[j] = arr[mid + 1+j]
         "ADD r5, r5, #1\n\t" //j++
         "B right_array\n\t" //continue
-
-        "prepare_merge:\n\t"
+        
+        "prepare_loop:\n\t"
         "MOV r4, #0\n\t" //i = 0
         "MOV r5, #0\n\t" //j = 0
         "MOV r6, %[left]\n\t" //k = left
@@ -226,7 +226,8 @@ void merge_ASM(int arr[], int left, int mid, int right) {
     free(LA);
     free(RA);
     return;
-}*/
+}
+*/
 /*
 void merge_ASM(int arr[], int left, int mid, int right) {
     int leftIndex, rightIndex, tempIndex;
@@ -317,8 +318,8 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         );
 
     free(temp); // 임시 배열 해제
-}
-*/
+}*/
+
 void merge_ASM(int arr[], int left, int mid, int right) {
     int tempIndex;
     int *LA;
@@ -361,10 +362,10 @@ void merge_ASM(int arr[], int left, int mid, int right) {
          "SUB r8, %[mid], %[left]\n\t"
          "ADD r8, r8, #1\n\t" //a = mid - left + 1
          "CMP r5, r8\n\t" //i < a            // leftIndex와 mid 비교
-         "BGT left_done\n\t"                 // leftIndex가 mid보다 크면 left 부분 배열이 끝났음을 의미, left_done으로 점프
+         "BGE left_done\n\t"                 // leftIndex가 mid보다 크면 left 부분 배열이 끝났음을 의미, left_done으로 점프
          "SUB r8, %[right], %[mid]\n\t" //b = right - mid
          "CMP r6, r8\n\t" //j < b           // rightIndex와 high 비교
-         "BGT right_done\n\t"                // rightIndex가 high보다 크면 right 부분 배열이 끝났음을 의미, right_done으로 점프
+         "BGE right_done\n\t"                // rightIndex가 high보다 크면 right 부분 배열이 끝났음을 의미, right_done으로 점프
          
          // 두 부분 배열의 현재 요소를 로드
          "LDR r8, [%[LA], r5, LSL #2]\n\t"  // a[leftIndex]의 값을 r5에 로드
@@ -376,12 +377,12 @@ void merge_ASM(int arr[], int left, int mid, int right) {
          
          "copy_left:\n\t"
          "STR r8, [%[arr], %[ti], LSL #2]\n\t"  // temp[tempIndex]에 a[leftIndex]값 저장
-         "ADD r8, r5, #1\n\t"         // leftIndex 증가
+         "ADD r5, r5, #1\n\t"         // leftIndex 증가
          "B increment_temp\n\t"             // tempIndex 증가로 점프
          
          "copy_right:\n\t"
          "STR r9, [%[arr], %[ti], LSL #2]\n\t"  // temp[tempIndex]에 a[rightIndex]값 저장
-         "ADD r9, r6, #1\n\t"         // rightIndex 증가
+         "ADD r6, r6, #1\n\t"         // rightIndex 증가
          
          "increment_temp:\n\t"
          "ADD %[ti], %[ti], #1\n\t"         // tempIndex 증가
@@ -395,7 +396,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
          "SUB r8, %[mid], %[left]\n\t"
          "ADD r8, r8, #1\n\t" //a = mid - left + 1
          "CMP r5, r8\n\t" //i < a
-         "BGT end_left\n\t"           // rightIndex가 high보다 크면 루프를 종료하고 merge 작업을 마무리
+         "BGE end_left\n\t"           // rightIndex가 high보다 크면 루프를 종료하고 merge 작업을 마무리
          "LDR r8, [%[LA], r5, LSL #2]\n\t" // 업데이트된 a[leftIndex]의 값을 r5에 로드
          "STR r8, [%[arr], %[ti], LSL #2]\n\t" // r5 레지스터의 값을 temp[tempIndex]에 저장
          "ADD r5, r5, #1\n\t"       // leftIndex 증가
@@ -408,7 +409,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
          // rightIndex가 high 보다 크지 않은 경우 (즉, 아직 오른쪽 부분 배열에 요소가 남아있는 경우) 계속 진행
          "SUB r8, %[right], %[mid]\n\t" //b = right - mid
          "CMP r6, r8\n\t" //j < b
-         "BGT end_merge\n\t"           // leftIndex가 mid보다 크면 루프를 종료하고 merge 작업을 마무리
+         "BGE end_merge\n\t"           // leftIndex가 mid보다 크면 루프를 종료하고 merge 작업을 마무리
          "LDR r8, [%[RA], r6, LSL #2]\n\t"  // 업데이트된 a[rightIndex]의 값을 r6에 로드
          "STR r8, [%[arr], %[ti], LSL #2]\n\t" // r6 레지스터의 값을 temp[tempIndex]에 저장
          "ADD r6, r6, #1\n\t"       // rightIndex 증가
@@ -430,13 +431,19 @@ void merge_ASM(int arr[], int left, int mid, int right) {
 }
 
 void mergesort_C(int arr[], int left, int right){
+    
     int mid;
+    
     if(left < right){
         mid = left + (right - left) / 2;
         mergesort_C(arr, left, mid);
         mergesort_C(arr, mid + 1, right);
+        
         merge_C(arr, left, mid, right);
+
     }
+    
+    
     return;
 }
 void mergesort_ASM(int arr[], int left, int right) {
