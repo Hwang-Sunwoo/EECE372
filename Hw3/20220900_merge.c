@@ -130,7 +130,7 @@ void merge_C(int arr[], int left, int mid, int right){
     }
     return;
 }
-/*
+
 void merge_ASM(int arr[], int left, int mid, int right) {
     
     int *LA;
@@ -229,7 +229,6 @@ void merge_ASM(int arr[], int left, int mid, int right) {
     free(RA);
     return;
 }
-*/
 /*
 void merge_ASM(int arr[], int left, int mid, int right) {
     int leftIndex, rightIndex, tempIndex;
@@ -321,7 +320,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
 
     free(temp); // 임시 배열 해제
 }*/
-
+/*
 void merge_ASM(int arr[], int left, int mid, int right) {
     int tempIndex;
     int *LA;
@@ -431,7 +430,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
     free(RA);
     return;
 }
-
+*/
 void mergesort_C(int arr[], int left, int right){
     
     int mid;
