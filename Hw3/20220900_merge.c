@@ -148,8 +148,8 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         "ADD r8, r8, #1\n\t" //a = mid - left + 1
         "CMP r4, r8\n\t" //i < a
         "BGE right_array\n\t" //for(j = 0; j < b; j++){
-        "ADD r8, %[left], r4\n\t" //left + i
-        "LDR r9, [%[arr], r8, LSL #2]\n\t" //arr[left + i]
+        "ADD r9, %[left], r4\n\t" //left + i
+        "LDR r9, [%[arr], r9, LSL #2]\n\t" //arr[left + i]
         "STR r9, [%[LA], r4, LSL #2]\n\t" //L[i] = arr[left + i]
         "ADD r4, #1\n\t" //i++
         "B left_array\n\t" //continue
@@ -158,10 +158,10 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         "SUB r8, %[right], %[mid]\n\t" //b = right - mid
         "CMP r5, r8\n\t" //j < b
         "BGE merge_loop\n\t" //while(i < a && j < b){
-        "ADD r8, %[mid], #1\n\t" //mid + 1
-        "ADD r8, r9, r5\n\t" //mid + 1 + j
-        "LDR r8, [%[arr], r8, LSL #2]\n\t" //arr[mid + 1 + j]
-        "STR r8, [%[RA], r5, LSL #2]\n\t" //R[j] = arr[mid + 1+j]
+        "ADD r9, %[mid], #1\n\t" //mid + 1
+        "ADD r9, r9, r5\n\t" //mid + 1 + j
+        "LDR r9, [%[arr], r8, LSL #2]\n\t" //arr[mid + 1 + j]
+        "STR r9, [%[RA], r5, LSL #2]\n\t" //R[j] = arr[mid + 1+j]
         "ADD r5, r5, #1\n\t" //j++
         "B right_array\n\t" //continue
         
