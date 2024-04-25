@@ -227,7 +227,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
     free(RA);
     return;
 }*/
-
+/*
 void merge_ASM(int arr[], int left, int mid, int right) {
     int leftIndex, rightIndex, tempIndex;
     int* temp;
@@ -318,13 +318,13 @@ void merge_ASM(int arr[], int left, int mid, int right) {
 
     free(temp); // 임시 배열 해제
 }
-/*
+*/
 void merge_ASM(int arr[], int left, int mid, int right) {
     int tempIndex;
     int *LA;
     int *RA;
-    LA = (int*)malloc(sizeof(int) * mid - left +1);
-    RA = (int* )malloc(sizeof(int) * right - mid);
+    LA = (int*)malloc(sizeof(int) * (mid - left +1));
+    RA = (int* )malloc(sizeof(int) * (right - mid));
     // r5, r6 / r8: a, b, leftindex, rightindex, etc / r9: etc
     asm (
          "MOV r5, #0\n\t" //i = 0
@@ -428,7 +428,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
     free(RA);
     return;
 }
-*/
+
 void mergesort_C(int arr[], int left, int right){
     int mid;
     if(left < right){
