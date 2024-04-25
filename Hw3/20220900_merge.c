@@ -96,7 +96,9 @@ void merge_C(int arr[], int left, int mid, int right){
     int i, j, k;
     int a = mid - left + 1;
     int b = right - mid;
-    int L[a], R[b];
+    int *L = (int*)malloc(sizeof(int) * a);
+    int *R = (int*)malloc(sizeof(int) * b);
+    
     
     for(i = 0; i < a; i++){
         L[i] = arr[left + i];
@@ -128,6 +130,9 @@ void merge_C(int arr[], int left, int mid, int right){
         j++;
         k++;
     }
+
+    free(L);
+    free(R);
     return;
 }
 
