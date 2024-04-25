@@ -140,6 +140,30 @@ void merge_ASM(int arr[], int left, int mid, int right) {
     // LA: left array / RA: right array
     // r8 / r9
     asm(
+        "MOV r4, #0\n\t" // i = 0
+        "MOV r5, #0\n\t" // j = 0
+
+        "left_array:\n\t"
+        "SUB r6, %[mid], %[left]\n\t"
+        "ADD r6, r6, #1\n\t"
+        "CMP r4, r6\n\t"
+        "BGE right_array\n\t"
+        "ADD r8, %[left], r4\n\t"
+        "LDR r9, [%[arr], r8, LSL #2]\n\t"
+        "STR r9, [%[LA], r4, LSL #2]\n\t"
+        "ADD r4, #1\n\t"
+        "B left_array\n\t"
+        
+        "right_array:\n\t"
+        "SUB r6, %[right], %[mid]\n\t"
+        "CMP r5, r6\n\t"
+        "BGE merge_loop\n\t"
+        "ADD r8, %[mid], r5\n\t"
+        "LDR r8, [%[arr], r8, LSL #2]\n\t"
+        "STR r8, [%[RA], r5, LSL #2]\n\t"
+        "ADD r5, #1\n\t"
+        "B right_array\n\t"
+        /*
         "MOV r4, #0\n\t" //i = 0
         "MOV r5, #0\n\t" //j = 0
 
@@ -167,7 +191,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         
         "MOV r4, #0\n\t" //i = 0
         "MOV r5, #0\n\t" //j = 0
-        "MOV r6, %[left]\n\t" //k = left
+        "MOV r6, %[left]\n\t" //k = left */
         
         "merge_loop:\n\t" //while(i < a && j < b){
             "SUB r8, %[mid], %[left]\n\t"
