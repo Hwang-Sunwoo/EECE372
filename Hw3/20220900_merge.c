@@ -160,7 +160,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         "CMP r5, r8\n\t" //j < b
         "BGE prepare_merge\n\t" //while(i < a && j < b){
         "ADD r9, %[mid], #1\n\t" //mid + 1
-        "ADD r9, r9, r5\n\t" //mid + 1 + j
+        "ADD r8, r9, r5\n\t" //mid + 1 + j
         "LDR r9, [%[arr], r8, LSL #2]\n\t" //arr[mid + 1 + j]
         "STR r9, [%[RA], r5, LSL #2]\n\t" //R[j] = arr[mid + 1+j]
         "ADD r5, r5, #1\n\t" //j++
