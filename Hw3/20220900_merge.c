@@ -158,7 +158,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         "right_array:\n\t" //for(j = 0; j < b; j++){
         "SUB r8, %[right], %[mid]\n\t" //b = right - mid
         "CMP r5, r8\n\t" //j < b
-        "BGE merge_loop\n\t" //while(i < a && j < b){
+        "BGE prepare_merge\n\t" //while(i < a && j < b){
         "ADD r9, %[mid], #1\n\t" //mid + 1
         "ADD r9, r9, r5\n\t" //mid + 1 + j
         "LDR r9, [%[arr], r8, LSL #2]\n\t" //arr[mid + 1 + j]
@@ -166,6 +166,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         "ADD r5, r5, #1\n\t" //j++
         "B right_array\n\t" //continue
         
+        "prepare_loop:\n\t"
         "MOV r4, #0\n\t" //i = 0
         "MOV r5, #0\n\t" //j = 0
         "MOV r6, %[left]\n\t" //k = left
@@ -229,19 +230,19 @@ void merge_ASM(int arr[], int left, int mid, int right) {
     return;
 }
 */
-
-void merge_ASM(int* a, int low, int mid, int high) {
+/*
+void merge_ASM(int arr[], int left, int mid, int right) {
     int leftIndex, rightIndex, tempIndex;
     int* temp;
-    temp = (int*)malloc(sizeof(int) * (high - low + 1)); // 임시 배열을 위한 메모리 할당
+    temp = (int*)malloc(sizeof(int) * (right - left + 1)); // 임시 배열을 위한 메모리 할당
     int n;
 
     asm (
         // 초기 레지스터 설정
-        "mov %[n], %[high]\n\t"
-        "sub %[n], %[low]\n\t"
+        "mov %[n], %[right]\n\t"
+        "sub %[n], %[left]\n\t"
         "add %[n], #1\n\t"                 // n을 high-low+1으로 초기화
-        "mov %[li], %[low]\n\t"            // leftIndex를 low 값으로 초기화
+        "mov %[li], %[left]\n\t"            // leftIndex를 low 값으로 초기화
         "mov %[ri], %[mid]\n\t"            // rightIndex를 mid 값으로 초기화
         "add %[ri], %[ri], #1\n\t"         // rightIndex를 mid+1로 설정하여 오른쪽 부분 배열의 시작점으로 설정
         "mov %[ti], #0\n\t"                // tempIndex를 0으로 초기화
@@ -250,12 +251,12 @@ void merge_ASM(int* a, int low, int mid, int high) {
         "loop_merge:\n\t"
         "cmp %[li], %[mid]\n\t"            // leftIndex와 mid 비교
         "bgt left_done\n\t"                 // leftIndex가 mid보다 크면 left 부분 배열이 끝났음을 의미, left_done으로 점프
-        "cmp %[ri], %[high]\n\t"           // rightIndex와 high 비교
+        "cmp %[ri], %[right]\n\t"           // rightIndex와 high 비교
         "bgt right_done\n\t"                // rightIndex가 high보다 크면 right 부분 배열이 끝났음을 의미, right_done으로 점프
 
         // 두 부분 배열의 현재 요소를 로드
-        "ldr r5, [%[a], %[li], LSL #2]\n\t"  // a[leftIndex]의 값을 r5에 로드
-        "ldr r6, [%[a], %[ri], LSL #2]\n\t"  // a[rightIndex]의 값을 r6에 로드
+        "ldr r5, [%[arr], %[li], LSL #2]\n\t"  // a[leftIndex]의 값을 r5에 로드
+        "ldr r6, [%[arr], %[ri], LSL #2]\n\t"  // a[rightIndex]의 값을 r6에 로드
 
         // 비교 및 temp에 저장
         "cmp r5, r6\n\t"
@@ -281,7 +282,7 @@ void merge_ASM(int* a, int low, int mid, int high) {
         // leftIndex가 mid 보다 크지 않은 경우 (즉, 아직 왼쪽 부분 배열에 요소가 남아있는 경우) 계속 진행
         "cmp %[li], %[mid]\n\t"
         "bgt end_left\n\t"           // rightIndex가 high보다 크면 루프를 종료하고 merge 작업을 마무리
-        "ldr r5, [%[a], %[li], LSL #2]\n\t" // 업데이트된 a[leftIndex]의 값을 r5에 로드
+        "ldr r5, [%[arr], %[li], LSL #2]\n\t" // 업데이트된 a[leftIndex]의 값을 r5에 로드
         "str r5, [%[temp], %[ti], LSL #2]\n\t" // r5 레지스터의 값을 temp[tempIndex]에 저장
         "add %[li], %[li], #1\n\t"       // leftIndex 증가
         "add %[ti], %[ti], #1\n\t"       // tempIndex 증가
@@ -291,9 +292,9 @@ void merge_ASM(int* a, int low, int mid, int high) {
         "check_right:\n\t"
         // 남은 오른쪽 부분 배열 요소를 temp에 복사
         // rightIndex가 high 보다 크지 않은 경우 (즉, 아직 오른쪽 부분 배열에 요소가 남아있는 경우) 계속 진행
-        "cmp %[ri], %[high]\n\t"
+        "cmp %[ri], %[right]\n\t"
         "bgt finish_merge\n\t"           // leftIndex가 mid보다 크면 루프를 종료하고 merge 작업을 마무리
-        "ldr r6, [%[a], %[ri], LSL #2]\n\t"  // 업데이트된 a[rightIndex]의 값을 r6에 로드
+        "ldr r6, [%[arr], %[ri], LSL #2]\n\t"  // 업데이트된 a[rightIndex]의 값을 r6에 로드
         "str r6, [%[temp], %[ti], LSL #2]\n\t" // r6 레지스터의 값을 temp[tempIndex]에 저장
         "add %[ri], %[ri], #1\n\t"       // rightIndex 증가
         "add %[ti], %[ti], #1\n\t"       // tempIndex 증가
@@ -306,19 +307,129 @@ void merge_ASM(int* a, int low, int mid, int high) {
         "cmp %[ti], %[n]\n\t"            // tempIndex와 n을 비교
         "bge end_copy_back\n\t"          // tempIndex가 n 이상이면 모든 요소를 복사했음을 의미하고, 복사 루프를 종료
         "ldr r5, [%[temp], %[ti], LSL #2]\n\t" // temp[tempIndex]에서 요소를 r5 레지스터로 로드
-        "str r5, [%[a], %[low], LSL #2]\n\t" // r5 레지스터의 값을 a[low + tempIndex]에 저장
-        "add %[low], %[low], #1\n\t"     // low 값을 증가시키며 배열 인덱스를 조정 (여기서 실수했음)
+        "str r5, [%[arr], %[left], LSL #2]\n\t" // r5 레지스터의 값을 a[low + tempIndex]에 저장
+        "add %[left], %[left], #1\n\t"     // low 값을 증가시키며 배열 인덱스를 조정 (여기서 실수했음)
         "add %[ti], %[ti], #1\n\t"       // tempIndex 증가
         "b copy_back_loop\n\t"           // 다시 copy_back_loop 레이블로 점프하여 나머지 요소를 계속 복사
 
         "end_copy_back:\n\t"
         :
-        : [a] "r" (a), [low] "r" (low), [mid] "r" (mid), [high] "r" (high),
+        : [arr] "r" (arr), [left] "r" (left), [mid] "r" (mid), [right] "r" (right),
         [li] "r" (leftIndex), [ri] "r" (rightIndex), [ti] "r" (tempIndex), [temp] "r" (temp), [n] "r" (n)
         : "r5", "r6", "cc", "memory"
         );
 
     free(temp); // 임시 배열 해제
+}*/
+
+void merge_ASM(int arr[], int left, int mid, int right) {
+    int tempIndex;
+    int *LA;
+    int *RA;
+    LA = (int*)malloc(sizeof(int) * mid - left +1);
+    RA = (int* )malloc(sizeof(int) * right - mid);
+    // r5, r6 / r8: a, b, leftindex, rightindex, etc / r9: etc
+    asm (
+         "MOV r5, #0\n\t" //i = 0
+         "MOV r6, #0\n\t" //j = 0
+         
+         "left_array:\n\t"//for(i = 0; i < a; i++){
+         "SUB r8, %[mid], %[left]\n\t"
+         "ADD r8, r8, #1\n\t" //a = mid - left + 1
+         "CMP r5, r8\n\t" //i < a
+         "BGE right_array\n\t" //for(j = 0; j < b; j++){
+         "ADD r8, %[left], r5\n\t" //left + i
+         "LDR r9, [%[arr], r8, LSL #2]\n\t" //arr[left + i]
+         "STR r9, [%[LA], r5, LSL #2]\n\t" //L[i] = arr[left + i]
+         "ADD r5, #1\n\t" //i++
+         "B left_array\n\t" //continue
+         
+         "right_array:\n\t" //for(j = 0; j < b; j++){
+         "SUB r8, %[right], %[mid]\n\t" //b = right - mid
+         "CMP r6, r8\n\t" //j < b
+         "BGE prepare_loop\n\t" //while(i < a && j < b){
+         "ADD r8, %[mid], #1\n\t" //mid + 1
+         "ADD r8, r8, r6\n\t" //mid + 1 + j
+         "LDR r9, [%[arr], r8, LSL #2]\n\t" //arr[mid + 1 + j]
+         "STR r9, [%[RA], r6, LSL #2]\n\t" //R[j] = arr[mid + 1+j]
+         "ADD r6, r6, #1\n\t" //j++
+         "B right_array\n\t" //continue
+         
+         "prepare_loop:\n\t"
+         "MOV r5, #0\n\t" //i = 0
+         "MOV r6, #0\n\t" //j = 0
+         "MOV %[ti], %[left]\n\t" //index = left
+         
+         "merge_loop:\n\t"
+         "SUB r8, %[mid], %[left]\n\t"
+         "ADD r8, r8, #1\n\t" //a = mid - left + 1
+         "CMP r5, r8\n\t" //i < a            // leftIndex와 mid 비교
+         "BGT left_done\n\t"                 // leftIndex가 mid보다 크면 left 부분 배열이 끝났음을 의미, left_done으로 점프
+         "SUB r8, %[right], %[mid]\n\t" //b = right - mid
+         "CMP r6, r8\n\t" //j < b           // rightIndex와 high 비교
+         "BGT right_done\n\t"                // rightIndex가 high보다 크면 right 부분 배열이 끝났음을 의미, right_done으로 점프
+         
+         // 두 부분 배열의 현재 요소를 로드
+         "LDR r8, [%[LA], r5, LSL #2]\n\t"  // a[leftIndex]의 값을 r5에 로드
+         "LDR r9, [%[RA], r6, LSL #2]\n\t"  // a[rightIndex]의 값을 r6에 로드
+         
+         // 비교 및 temp에 저장
+         "CMP r8, r9\n\t"
+         "BGT copy_right\n\t"                // r5 > r6 이면 오른쪽 요소를 temp에 복사
+         
+         "copy_left:\n\t"
+         "STR r8, [%[arr], %[ti], LSL #2]\n\t"  // temp[tempIndex]에 a[leftIndex]값 저장
+         "ADD r8, r5, #1\n\t"         // leftIndex 증가
+         "B increment_temp\n\t"             // tempIndex 증가로 점프
+         
+         "copy_right:\n\t"
+         "STR r9, [%[arr], %[ti], LSL #2]\n\t"  // temp[tempIndex]에 a[rightIndex]값 저장
+         "ADD r9, r6, #1\n\t"         // rightIndex 증가
+         
+         "increment_temp:\n\t"
+         "ADD %[ti], %[ti], #1\n\t"         // tempIndex 증가
+         "B merge_loop\n\t"                 // 병합 루프로 돌아가기
+         
+         "left_done:\n\t"
+         "right_done:\n\t"
+         "check_left:\n\t"
+         // 남은 왼쪽 부분 배열 요소를 temp에 복사
+         // leftIndex가 mid 보다 크지 않은 경우 (즉, 아직 왼쪽 부분 배열에 요소가 남아있는 경우) 계속 진행
+         "SUB r8, %[mid], %[left]\n\t"
+         "ADD r8, r8, #1\n\t" //a = mid - left + 1
+         "CMP r5, r8\n\t" //i < a
+         "BGT end_left\n\t"           // rightIndex가 high보다 크면 루프를 종료하고 merge 작업을 마무리
+         "LDR r8, [%[LA], r5, LSL #2]\n\t" // 업데이트된 a[leftIndex]의 값을 r5에 로드
+         "STR r8, [%[arr], %[ti], LSL #2]\n\t" // r5 레지스터의 값을 temp[tempIndex]에 저장
+         "ADD r5, r5, #1\n\t"       // leftIndex 증가
+         "ADD %[ti], %[ti], #1\n\t"       // tempIndex 증가
+         "B check_left\n\t"                 // 다시 check_left 레이블로 점프하여 남은 오른쪽 요소를 계속 복사
+         
+         "end_left:\n\t"
+         "check_right:\n\t"
+         // 남은 오른쪽 부분 배열 요소를 temp에 복사
+         // rightIndex가 high 보다 크지 않은 경우 (즉, 아직 오른쪽 부분 배열에 요소가 남아있는 경우) 계속 진행
+         "SUB r8, %[right], %[mid]\n\t" //b = right - mid
+         "CMP r6, r8\n\t" //j < b
+         "BGT end_merge\n\t"           // leftIndex가 mid보다 크면 루프를 종료하고 merge 작업을 마무리
+         "LDR r8, [%[RA], r6, LSL #2]\n\t"  // 업데이트된 a[rightIndex]의 값을 r6에 로드
+         "STR r8, [%[arr], %[ti], LSL #2]\n\t" // r6 레지스터의 값을 temp[tempIndex]에 저장
+         "ADD r6, r6, #1\n\t"       // rightIndex 증가
+         "ADD %[ti], %[ti], #1\n\t"       // tempIndex 증가
+         "B check_right\n\t"                // 다시 check_right 레이블로 점프하여 남은 왼쪽 요소를 계속 복사
+         
+         "end_merge:\n\t"
+         // temp의 내용을 원래의 배열 a에 복사
+         
+         :
+         : [arr] "r" (arr), [left] "r" (left), [mid] "r" (mid), [right] "r" (right),
+         [ti] "r" (tempIndex), [RA] "r" (RA), [LA] "r"(LA)
+         : "r5", "r6", "r8", "r9", "cc", "memory"
+         );
+    
+    free(LA);
+    free(RA);
+    return;
 }
 
 void mergesort_C(int arr[], int left, int right){
@@ -337,103 +448,50 @@ void mergesort_C(int arr[], int left, int right){
     
     return;
 }
-/*
-void mergesort_ASM(int arr[], int left, int right){
-    
-    asm(
-        // r0: arr / r1: left / r2: right / r3:mid / r4: length
-                
-        "SUB r4, %[right], %[left]\n\t"
-        "ADD r4, r4, #1\n\t"
-        
-        "CMP r4, #1\n\t"        // 배열 크기가 1 이하이면 종료
-        "BLE end_sort\n\t" //return
-        
-        // 배열의 중간 인덱스 계산
-        "ADD r3, %[left], %[right]\n\t"       // r3 = left + right
-        "LSR r3, r3, #1\n\t"       // r3 = (left + right) / 2
-        
-        // 배열의 왼쪽 부분을 병합 정렬
-        "mov r2, r3\n\t"           // 배열의 시작 주소를 r5에 저장
-        "bl mergesort_ASM\n\t"     // 재귀 호출
-        
-        // 배열의 오른쪽 부분을 병합 정렬
-        "add r1, r3, #1\n\t" // 배열의 시작 주소를 중간으로 이동
-        "bl mergesort_ASM\n\t"     // 재귀 호출
-        
-        // 배열 병합
-        "mov r1, %[left]\n\t"           // r2에 왼쪽 배열의 시작 주소를 복사
-        "mov r2, %[right]\n\t"           // r3에 오른쪽 배열의 시작 주소를 복사
-        "bl merge_ASM\n\t"         // 병합 함수 호출
-        
-    "end_sort:"
-
-        :
-        : [arr] "r"(arr), [left] "r"(left), [right] "r"(right)
-        : "r0", "r1", "r2", "r3", "r4"
-        );
-    return;
-}
-
-void mergesort_ASM(int arr[], int left, int right){
-        int mid;
-        
-        if(left < right){
-            mid = left + (right - left) / 2;
-            mergesort_ASM(arr, left, mid);
-            mergesort_ASM(arr, mid + 1, right);
-            
-            merge_ASM(arr, left, right, mid);
-
-        }
-        
-        return;
-}
-*/
-void mergesort_ASM(int* a, int low, int high) {
+void mergesort_ASM(int arr[], int left, int right) {
+    // r0: arr/ r1: left/ r2: right/ r3: mid/ r4: temp/
     asm(
         // Initialize registers r1, r2 only if they are not set (can use a flag or check if r1, r2 are zero)
-        "cmp r1, #0\n\t"
-        "cmpeq r2, #0\n\t"
-        "moveq r1, %[l]\n\t"               // Set r4 to low if not already set
-        "moveq r2, %[h]\n\t"               // Set r5 to high if not already set
+        "CMP r1, #0\n\t"
+        "CMPEQ r2, #0\n\t"
+        "MOVEQ r1, %[left]\n\t"               // Set r4 to low if not already set
+        "MOVEQ r2, %[right]\n\t"               // Set r5 to high if not already set
         
-        // ∫Ò±≥ ø¨ªÍ¿ª ºˆ«‡«œø© lowøÕ high∏¶ ∫Ò±≥
-        "mov r0, %[a]\n\t"                 // πËø≠ ∆˜¿Œ≈Õ a∏¶ r0ø° º≥¡§
-        "cmp r1, r2\n\t"               // ∫Ò±≥: low >= high
-        "bge end_mergesort\n\t"            // ∏∏æ‡ low >= high ¿Ã∏È, ¿Á±Õ¿« ∫£¿ÃΩ∫ ƒ…¿ÃΩ∫ø° µµ¥ﬁ«ﬂ¿∏π«∑Œ end_mergesort∑Œ ∫–±‚
+        // if(left < right)
+        "MOV r0, %[arr]\n\t"                 // 배열 포인터 a를 r0에 설정
+        "CMP r1, r2\n\t"               // 비교: low >= high
+        "BGE end_sort\n\t"            // 만약 low >= high 이면, 재귀의 베이스 케이스에 도달했으므로 end_mergesort로 분기
 
-        // ¡ﬂ∞£ ¡ˆ¡° ∞ËªÍ
-        "sub r3, r2, r1\n\t"           // r3 = high - low, πËø≠ ±Ê¿Ã ∞ËªÍ
-        "lsr r3, r3, #1\n\t"               // r3 = (high - low) / 2, ø¿∏•¬ ¿∏∑Œ «— ∫Ò∆Æ Ω√«¡∆Æ«œø© 2∑Œ ≥™¥Æ
-        "add r3, r1, r3\n\t"             // r3 = low + (high - low) / 2, ¡ﬂ∞£ ¿Œµ¶Ω∫ ∞ËªÍ
+        // mid = left + (right - left) / 2
+        "SUB r3, r2, r1\n\t"           // r3 = high - low, 배열 길이 계산
+        "LSR r3, r3, #1\n\t"               // r3 = (high - low) / 2, 오른쪽으로 한 비트 시프트하여 2로 나눔
+        "ADD r3, r1, r3\n\t"             // r3 = low + (high - low) / 2, 중간 인덱스 계산
 
-        // √π π¯¬∞ ¿Á±Õ »£√‚: øﬁ¬  ∫Œ∫– πËø≠ ¡§∑ƒ
-        "push {r0-r3, lr}\n\t"             // r0∫Œ≈Õ r3±Ó¡ˆ¿« ∑π¡ˆΩ∫≈ÕøÕ ∏µ≈© ∑π¡ˆΩ∫≈Õ(lr)∏¶ Ω∫≈√ø° ¿˙¿Â
-        "mov r2, r3\n\t"                   // ¡ﬂ∞£ ¿Œµ¶Ω∫ mid∏¶ r2ø° º≥¡§
-        "bl mergesort_ASM\n\t"             // mergesort_ASM «‘ºˆ »£√‚
-        "pop {r0-r3, lr}\n\t"              // Ω∫≈√ø°º≠ r0∫Œ≈Õ r3±Ó¡ˆ¿« ∑π¡ˆΩ∫≈ÕøÕ ∏µ≈© ∑π¡ˆΩ∫≈Õ(lr)∏¶ ∫π±∏
+        // mergesort_ASM(arr, left, mid)
+        "PUSH {r0-r3, lr}\n\t"             // r0부터 r3까지의 레지스터와 링크 레지스터(lr)를 스택에 저장
+        "MOV r2, r3\n\t"                   // 중간 인덱스 mid를 r2에 설정
+        "BL mergesort_ASM\n\t"             // mergesort_ASM 함수 호출
+        "POP {r0-r3, lr}\n\t"              // 스택에서 r0부터 r3까지의 레지스터와 링크 레지스터(lr)를 복구
 
-        // µŒ π¯¬∞ ¿Á±Õ »£√‚: ø¿∏•¬  ∫Œ∫– πËø≠ ¡§∑ƒ
-        "push {r0-r3, lr}\n\t"             // r0∫Œ≈Õ r3±Ó¡ˆ¿« ∑π¡ˆΩ∫≈ÕøÕ ∏µ≈© ∑π¡ˆΩ∫≈Õ(lr)∏¶ Ω∫≈√ø° ¿˙¿Â
-        "mov r1, r3\n\t"                   // ¡ﬂ∞£ ¿Œµ¶Ω∫ mid∏¶ r1ø° ¥ŸΩ√ º≥¡§
-        "add r1, r1, #1\n\t"               // r1 = mid + 1, ø¿∏•¬  ∫Œ∫– πËø≠¿« Ω√¿€ ¿Œµ¶Ω∫ º≥¡§
-        "mov r2, %[h]\n\t"                 // ¡æ∑· ¿Œµ¶Ω∫ high∏¶ r2ø° º≥¡§
-        "bl mergesort_ASM\n\t"             // mergesort_ASM «‘ºˆ »£√‚
-        "pop {r0-r3, lr}\n\t"              // Ω∫≈√ø°º≠ r0∫Œ≈Õ r3±Ó¡ˆ¿« ∑π¡ˆΩ∫≈ÕøÕ ∏µ≈© ∑π¡ˆΩ∫≈Õ(lr)∏¶ ∫π±∏
+        // mergesort_ASM(arr, mid + 1, right)
+        "PUSH {r0-r3, lr}\n\t"             // r0부터 r3까지의 레지스터와 링크 레지스터(lr)를 스택에 저장
+        "MOV r1, r3\n\t"                   // 중간 인덱스 mid를 r1에 다시 설정
+        "ADD r1, r1, #1\n\t"               // r1 = mid + 1, 오른쪽 부분 배열의 시작 인덱스 설정
+        "MOV r2, %[right]\n\t"                 // 종료 인덱스 high를 r2에 설정
+        "BL mergesort_ASM\n\t"             // mergesort_ASM 함수 호출
+        "POP {r0-r3, lr}\n\t"              // 스택에서 r0부터 r3까지의 레지스터와 링크 레지스터(lr)를 복구
 
-        // ∫¥«’ »£√‚: ¡§∑ƒµ» µŒ ∫Œ∫– πËø≠ ∫¥«’
-        "push {r0-r3, lr}\n\t"             // r0∫Œ≈Õ r3±Ó¡ˆ¿« ∑π¡ˆΩ∫≈ÕøÕ ∏µ≈© ∑π¡ˆΩ∫≈Õ(lr)∏¶ Ω∫≈√ø° ¿˙¿Â
-        "mov r4, r2\n\t"                   // ¡æ∑· ¿Œµ¶Ω∫ high∏¶ temp∑Œ r4ø° ¿·Ω√ ¿˙¿Â
-        "mov r2, r3\n\t"                   // ¡ﬂ∞£ ¿Œµ¶Ω∫ mid∏¶ r2ø° º≥¡§
-        "mov r3, r4\n\t"                   // ¡æ∑· ¿Œµ¶Ω∫ high∏¶ r3ø° º≥¡§
-        "bl merge_ASM\n\t"                 // merge_ASM «‘ºˆ »£√‚
-        "pop {r0-r3, lr}\n\t"              // Ω∫≈√ø°º≠ r0∫Œ≈Õ r3±Ó¡ˆ¿« ∑π¡ˆΩ∫≈ÕøÕ ∏µ≈© ∑π¡ˆΩ∫≈Õ(lr)∏¶ ∫π±∏
+        // merge_ASM(arr, left, mid, right)
+        "PUSH {r0-r3, lr}\n\t"             // r0부터 r3까지의 레지스터와 링크 레지스터(lr)를 스택에 저장
+        "MOV r4, r2\n\t"                   // 종료 인덱스 high를 temp로 r4에 잠시 저장
+        "MOV r2, r3\n\t"                   // 중간 인덱스 mid를 r2에 설정
+        "MOV r3, r4\n\t"                   // 종료 인덱스 high를 r3에 설정
+        "BL merge_ASM\n\t"                 // merge_ASM 함수 호출
+        "POP {r0-r3, lr}\n\t"              // 스택에서 r0부터 r3까지의 레지스터와 링크 레지스터(lr)를 복구
 
-        "end_mergesort:\n\t"               // ¿Á±Õ¿« ∫£¿ÃΩ∫ ƒ…¿ÃΩ∫ π◊ «‘ºˆ ¡æ∑· ¡ˆ¡° ∑π¿Ã∫Ì
+        "end_sort:\n\t"               // 재귀의 베이스 케이스 및 함수 종료 지점 레이블
         :
-        : [a] "r" (a), [l] "r" (low), [h] "r" (high)  // ¿‘∑¬: πËø≠ ∆˜¿Œ≈Õ, Ω√¿€ ¿Œµ¶Ω∫, ¡æ∑· ¿Œµ¶Ω∫
-        : "r0", "r1", "r2", "r3", "r4", "lr", "memory", "cc"  // clobbered: ªÁøÎµ» ∑π¡ˆΩ∫≈ÕøÕ ∏ﬁ∏∏Æ, ¡∂∞« ƒ⁄µÂ
+        : [arr] "r" (arr), [left] "r" (left), [right] "r" (right)  // 입력: 배열 포인터, 시작 인덱스, 종료 인덱스
+        : "r0", "r1", "r2", "r3", "r4", "lr", "memory", "cc"  // clobbered: 사용된 레지스터와 메모리, 조건 코드
         );
 }
-
