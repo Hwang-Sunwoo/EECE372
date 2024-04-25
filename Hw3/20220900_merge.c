@@ -166,7 +166,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         "ADD r5, r5, #1\n\t" //j++
         "B right_array\n\t" //continue
         
-        "prepare_loop:\n\t"
+        "prepare_merge:\n\t"
         "MOV r4, #0\n\t" //i = 0
         "MOV r5, #0\n\t" //j = 0
         "MOV r6, %[left]\n\t" //k = left
