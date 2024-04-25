@@ -185,9 +185,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
             "CMP r8, r9\n\t" //L[i] <= R[j]
             "BLE copy_left\n\t"
             "B copy_right\n\t"
-            
-            "B end_merge\n\t"
-        
+                    
         "update_k:\n\t"
         "CMP r6, %[right]\n\t" //k <= right
         "BGE end_merge\n\t"
