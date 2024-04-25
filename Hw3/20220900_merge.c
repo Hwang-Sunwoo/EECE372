@@ -130,7 +130,7 @@ void merge_C(int arr[], int left, int mid, int right){
     }
     return;
 }
-
+/*
 void merge_ASM(int arr[], int left, int mid, int right) {
     
     int *LA;
@@ -166,7 +166,6 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         "ADD r5, r5, #1\n\t" //j++
         "B right_array\n\t" //continue
 
-        /*
         "prepare_merge:\n\t"
         "MOV r4, #0\n\t" //i = 0
         "MOV r5, #0\n\t" //j = 0
@@ -220,31 +219,6 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         "STR r8, [%[arr], r6, LSL #2]\n\t" //arr[k] = R[j]
         "ADD r5, r5, #1\n\t" //j++
         "B update_k\n\t"
-        */
-        //가짜
-        "prepare_merge:\n\t"
-        "MOV r4, #0\n\t" //i = 0
-        "MOV r5, #0\n\t" //j = 0
-        "MOV r6, %[left]\n\t" //k = left
-        
-        "copy_left:\n\t"
-        "SUB r8, %[mid], %[left]\n\t"
-        "ADD r8, r8, #1\n\t" //getting a
-        "CMP r4, r8\n\t" //i < a
-        "BGE copy_right\n\t"
-        "LDR r8, [%[LA], r4, LSL #2]\n\t" //L[i]
-        "STR r8, [%[arr], r6, LSL #2]\n\t" //arr[k] = L[i]
-        "ADD r4, r4, #1\n\t" //i++
-        "B copy_left\n\t"
-        
-        "copy_right:\n\t"
-        "SUB r8, %[right], %[mid]\n\t" //getting b
-        "CMP r5, r8\n\t" //j < b
-        "BGE end_merge\n\t" //return
-        "LDR r8, [%[RA], r5, LSL #2]\n\t" //R[j]
-        "STR r8, [%[arr], r6, LSL #2]\n\t" //arr[k] = R[j]
-        "ADD r5, r5, #1\n\t" //j++
-        "B copy_right\n\t"
         
         "end_merge:\n\t"
         :
@@ -254,8 +228,8 @@ void merge_ASM(int arr[], int left, int mid, int right) {
     free(LA);
     free(RA);
     return;
-}
-/*
+}*/
+
 void merge_ASM(int arr[], int left, int mid, int right) {
     int leftIndex, rightIndex, tempIndex;
     int* temp;
@@ -345,7 +319,7 @@ void merge_ASM(int arr[], int left, int mid, int right) {
         );
 
     free(temp); // 임시 배열 해제
-}*/
+}
 /*
 void merge_ASM(int arr[], int left, int mid, int right) {
     int tempIndex;
@@ -458,19 +432,13 @@ void merge_ASM(int arr[], int left, int mid, int right) {
 }
 */
 void mergesort_C(int arr[], int left, int right){
-    
     int mid;
-    
     if(left < right){
         mid = left + (right - left) / 2;
         mergesort_C(arr, left, mid);
         mergesort_C(arr, mid + 1, right);
-        
         merge_C(arr, left, mid, right);
-
     }
-    
-    
     return;
 }
 void mergesort_ASM(int arr[], int left, int right) {
