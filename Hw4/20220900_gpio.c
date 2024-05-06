@@ -6,7 +6,7 @@
 int SEGMENT_PINS[8] = {11, 7, 35, 33, 31, 13, 15, 37}  // 7-segment에 연결된 GPIO 핀들
 #define NUM_SEGMENTS 8
 
-void setup() {
+void setting() {
     wiringPiSetupGpio();
     
     // 입력 스위치 설정
@@ -44,7 +44,7 @@ int main() {
 	{1,0,0,1,1,1,1,0},
 	{1,0,0,0,1,1,1,0}
     };
-    setup();
+    setting();
     
     
     while(1) {
