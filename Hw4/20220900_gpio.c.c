@@ -35,15 +35,17 @@ void setup() {
     pullUpDnControl(SWITCH_PIN, PUD_UP);
     
     // 7-segment 설정
+    int segment_pins[NUM_SEGMENTS] = SEGMENT_PINS;
     for (int i = 0; i < NUM_SEGMENTS; i++) {
-        pinMode(SEGMENT_PINS[i], OUTPUT);
-        digitalWrite(SEGMENT_PINS[i], LOW);
+        pinMode(segment_pins[i], OUTPUT);
+        digitalWrite(segment_pins[i], LOW);
     }
 }
 
 void displayNumber(int number) {
+    int segment_pins[NUM_SEGMENTS] = SEGMENT_PINS;
     for (int i = 0; i < NUM_SEGMENTS; i++) {
-        digitalWrite(SEGMENT_PINS[i], (segmentValues[number] >> i) & 1);
+        digitalWrite(segment_pins[i], (segmentValues[number] >> i) & 1);
     }
 }
 
