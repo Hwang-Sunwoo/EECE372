@@ -18,7 +18,7 @@ void setup() {
     for (int i = 0; i < NUM_SEGMENTS; i++) {
         pinMode(segment_pins[i], OUTPUT);
     }
-}
+};
 
 
 int main() {
