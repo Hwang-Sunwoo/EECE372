@@ -3,7 +3,7 @@
 #include <wiringPi.h>
 
 #define SWITCH_PIN 40  // 입력 스위치에 연결된 GPIO 핀
-#define SEGMENT_PINS {11, 7, 23, 21, 19, 13, 15, 29}  // 7-segment에 연결된 GPIO 핀들
+#define SEGMENT_PINS {11, 7, 35, 33, 31, 13, 15, 37}  // 7-segment에 연결된 GPIO 핀들
 #define NUM_SEGMENTS 8
 
 int segmentValues[] = {
@@ -24,8 +24,6 @@ int segmentValues[] = {
     0b01111001, // E
     0b01110001  // F
 };
-
-int currentNumber = 0; // 현재 7-segment에 표시되는 숫자
 
 void setup() {
     wiringPiSetupGpio();
@@ -49,29 +47,22 @@ void displayNumber(int number) {
     }
 }
 
-void loop() {
-    int switchState = digitalRead(SWITCH_PIN);
-    if (switchState == LOW) {
-        delay(200); // 디바운싱을 위한 딜레이
-        
-        // 스위치 눌림 감지
-        currentNumber++;
-        if (currentNumber > 15) {
-            currentNumber = 0; // 0부터 다시 시작
-        }
-        displayNumber(currentNumber);
-        
-        // 눌림 감지 후 스위치 놓을 때까지 기다림
-        while (digitalRead(SWITCH_PIN) == LOW) {
-            delay(50);
-        }
-    }
-}
-
 int main() {
     setup();
+    
+    int count = 0;
+    int btn_state;
+    
     while(1) {
-        loop();
+        btn_state = digitalRead(SWITCH_PIN);
+        if (btn_state == HIGH) {
+            if (count > 15) {
+                count = 0;
+            }
+            displayNumber(count);
+            count++;
+            delay(1000);
+        }
     }
     return 0;
 }
