@@ -3,7 +3,7 @@
 #include <wiringPi.h>
 
 #define SWITCH_PIN 40  // 입력 스위치에 연결된 GPIO 핀
-#define SEGMENT_PINS {11, 7, 35, 33, 31, 13, 15, 37}  // 7-segment에 연결된 GPIO 핀들
+int SEGMENT_PINS[8] = {11, 7, 35, 33, 31, 13, 15, 37}  // 7-segment에 연결된 GPIO 핀들
 #define NUM_SEGMENTS 8
 
 void setup() {
@@ -20,12 +20,6 @@ void setup() {
     }
 }
 
-void displayNumber(int number) {
-    int segment_pins[NUM_SEGMENTS] = SEGMENT_PINS;
-    for (int i = 0; i < NUM_SEGMENTS; i++) {
-        digitalWrite(segment_pins[i], (segmentValues[number] >> i) & 1);
-    }
-}
 
 int main() {
 
