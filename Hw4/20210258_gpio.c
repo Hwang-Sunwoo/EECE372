@@ -1,23 +1,23 @@
 #include <wiringPi.h>
 #include <stdio.h>
 
-#define BTN 26
-#define g 24
-#define f 23
-#define a 22
-#define b 21
-#define e 29
-#define d 25
-#define c 28
-#define DP 27
+#define BTN 29
+#define g 3
+#define f 2
+#define a 0
+#define b 7
+#define e 22
+#define d 23
+#define c 24
+#define DP 25
 
 int main(void) {
 	int cnt = 0;
 
-	if (wiringPiSetup() == -1) { //library include ½ÇÆĞ½Ã Á¾·á
+	if (wiringPiSetup() == -1) { //library include ËÃ‡Ä†ÄËÄ‚ ÃÅ¾Ë‡Ã¡
 		return 1;
 	}
-	pinMode(BTN, INPUT); //pinµé ¸ğµå¼³Á¤
+	pinMode(BTN, INPUT); //pinÄ¾Ã© Â¸Ä‘Ä¾ÄºÅºÅ‚ÃÂ¤
 	pinMode(g, OUTPUT);
 	pinMode(f, OUTPUT);
 	pinMode(a, OUTPUT);
