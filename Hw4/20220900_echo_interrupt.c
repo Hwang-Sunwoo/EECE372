@@ -13,29 +13,7 @@ int SEGMENT_PINS[8] = {0, 7, 24, 23, 22, 2, 3, 25};
 int fd;
 char buf[256];
 char row;
-
-void callback_function(int status)
-{
-	int cnt = read(fd, buf, 256);
-	buf[cnt] = '\0';
-	write(fd, "echo: ", 6);
-	write(fd, buf, cnt);
-	write(fd, "\r\n", 2);
-	printf("Received: %s\r\n", buf);
-	row = (char)buf[0];
-}
-
-void task()
-{
-	int i;
-	for(i=0; i<400000000; i++);
-}
-
-int main()
-{
-    struct termios newtio;
-    struct sigaction saio;
-    int sev_seg[17][8]={
+int sev_seg[17][8]={
 	{1,1,1,1,1,1,0,0},
 	{0,1,1,0,0,0,0,0},
 	{1,1,0,1,1,0,1,0},
@@ -53,7 +31,42 @@ int main()
 	{1,0,0,1,1,1,1,0},
 	{1,0,0,0,1,1,1,0},
 	{0,1,1,0,1,1,1,0}
-    };
+};
+
+void callback_function(int status)
+{
+	int cnt = read(fd, buf, 256);
+	buf[cnt] = '\0';
+	write(fd, "echo: ", 6);
+	write(fd, buf, cnt);
+	write(fd, "\r\n", 2);
+	printf("Received: %s\r\n", buf);
+	row = (char)buf[0];
+	if(48 <= row && row <= 57){
+		for(int i = 0; i < 8; i++)
+			digitalWrite(SEGMENT_PINS[i], sev_seg[row - 48][i]);
+	}
+	else if(65 <= row && row <= 70){
+		for(int i = 0; i < 8; i++)
+			digitalWrite(SEGMENT_PINS[i], sev_seg[row - 55][i]);
+	}
+	else{
+		for(int i = 0; i < 8; i++)
+			digitalWrite(SEGMENT_PINS[i], sev_seg[16][i]);
+	}
+}
+
+void task()
+{
+	int i;
+	for(i=0; i<400000000; i++);
+}
+
+int main()
+{
+    struct termios newtio;
+    struct sigaction saio;
+    
 	fd = open("/dev/serial0", O_RDWR|O_NOCTTY);
 	if(fd<0) {
 		fprintf(stderr, "failed to open port: %s.\r\n", strerror(errno));
@@ -96,18 +109,6 @@ int main()
 	while(1) {
 
 		task();
-		if(48 <= row && row <= 57){
-			for(int i = 0; i < 8; i++)
-				digitalWrite(SEGMENT_PINS[i], sev_seg[row - 48][i]);
-		}
-		else if(65 <= row && row <= 70){
-			for(int i = 0; i < 8; i++)
-				digitalWrite(SEGMENT_PINS[i], sev_seg[row - 55][i]);
-		}
-		else{
-			for(int i = 0; i < 8; i++)
-				digitalWrite(SEGMENT_PINS[i], sev_seg[16][i]);
-		}
 	}
 	return 0;
 }
