@@ -37,14 +37,14 @@ int main(){
 	
     while(1){
 	if(btn_state == 0) {
-		if(digitalRead(SWITCH_PIN) == 1){
+		if(digitalRead(SWITCH_PIN) == HIGH){
 			row++;
 			row = row % 16;
 			btn_state = 1;
 		}
 	}
 	else if(btn_state == 1){
-		if(digitalRead(SWITCH_PIN) == 0){
+		if(digitalRead(SWITCH_PIN) == LOW){
 			btn_state = 0;
 		}
 	}
