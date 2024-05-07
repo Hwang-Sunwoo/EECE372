@@ -9,14 +9,14 @@
 #include <wiringPi.h>
 
 #define BAUDRATE B1000000
-#define g 24
-#define f 23
-#define a 22
-#define b 21
-#define e 29
-#define d 25
-#define c 28
-#define DP 27
+#define g 3
+#define f 2
+#define a 0
+#define b 7
+#define e 22
+#define d 23
+#define c 24
+#define DP 25
 
 void task()
 {
