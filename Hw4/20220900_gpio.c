@@ -5,11 +5,9 @@
 #define SWITCH_PIN 29  // 입력 스위치에 연결된 GPIO 핀
 int SEGMENT_PINS[8] = {0, 7, 24, 23, 22, 2, 3, 25};  // 7-segment에 연결된 GPIO 핀들
 
-int main() {
-
-    int count = 0;
+int main(){
+    int row = 0;
     int btn_state = 0;
-    int b;
     int sev_seg[16][8]={
 	{1,1,1,1,1,1,0,0},
 	{0,1,1,0,0,0,0,0},
@@ -28,35 +26,31 @@ int main() {
 	{1,0,0,1,1,1,1,0},
 	{1,0,0,0,1,1,1,0}
     };
-    
-    wiringPiSetupGpio();
-    
-    pinMode(SWITCH_PIN, INPUT); // 입력 스위치 설정
-
-    for (int i = 0; i < 8; i++) { // 7-segment 설정
-        pinMode(SEGMENT_PINS[i], OUTPUT);
+    if (wiringPiSetup() == -1){
+	return 1;
     }
-    
-    
-    while(1) {
-        if(btn_state == 0){
-            if(digitalRead(SWITCH_PIN) == 1){
-                count++;
-                count = count % 16;
-                btn_state = 1;
-            }
-        }else if(btn_state == 1){
-            if(digitalRead(SWITCH_PIN) == 0){
-                btn_state = 0;
-            }
-        }
-        for(b = 0; b < 8; b++){
-            digitalWrite(SEGMENT_PINS[b], sev_seg[count][b]);
-        }
-        delay(100);
-        
+	
+    pinMode(SWITCH_PIN, INPUT);
+   for(int i = 0; i < 8; i++){
+	pinMode(SEGMENT_PINS[i], OUTPUT);
+   }
+	
+    while(1){
+	if(before_state == 0) {
+		if(digitalRead(SW) == 1){
+			row++;
+			row = row % 16;
+			btn_state = 1;
+		}
+	}
+	else if(before_state == 1){
+		if(digitalRead(SW) == 0){
+			btn_state = 0;
+		}
+	}
+	for(b = 0; b < 8; b++){
+    		digitalWrite(SEGMENT_PINS[b], sev_seg[row][b]);
+	}
+	delay(100);
     }
-    return 0;
 }
-
-
