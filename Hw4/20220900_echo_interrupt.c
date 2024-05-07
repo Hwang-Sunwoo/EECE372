@@ -9,18 +9,29 @@
 #include <wiringPi.h>
 
 #define BAUDRATE B1000000
-
-#define A 0
-#define B 7
-#define C 24
-#define D 23
-#define E 22
-#define F 2
-#define G 3
-#define DP 25
-
+int SEGMENT_PINS[8] = {0, 7, 3, 22, 23, 24, 25, 2};
 int fd;
 char buf[256];
+char row;
+int sev_seg[17][8]={
+	{1,1,1,1,1,1,0,0},
+	{0,1,1,0,0,0,0,0},
+	{1,1,0,1,1,0,1,0},
+	{1,1,1,1,0,0,1,0},
+	{0,1,1,0,0,1,1,0},
+	{1,0,1,1,0,1,1,0},
+	{1,0,1,1,1,1,1,0},
+	{1,1,1,0,0,1,0,0},
+	{1,1,1,1,1,1,1,0},
+	{1,1,1,1,0,1,1,0},
+	{1,1,1,0,1,1,1,0},
+	{0,0,1,1,1,1,1,0},
+	{0,0,0,1,1,0,1,0},
+	{0,1,1,1,1,0,1,0},
+	{1,0,0,1,1,1,1,0},
+	{1,0,0,0,1,1,1,0},
+	{0,1,1,0,1,1,1,0}
+};
 
 void callback_function(int status)
 {
@@ -30,240 +41,19 @@ void callback_function(int status)
 	write(fd, buf, cnt);
 	write(fd, "\r\n", 2);
 	printf("Received: %s\r\n", buf);
-	
-	switch(buf[0]){
-		case '0':
-			digitalWrite(A, 1);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 0);
-			digitalWrite(DP, 0);
-			break;
-		case '1':
-			digitalWrite(A, 0);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 0);
-			digitalWrite(E, 0);
-			digitalWrite(F, 0);
-			digitalWrite(G, 0);
-			digitalWrite(DP, 0);
-			break;
-		case '2':
-			digitalWrite(A, 1);
-			digitalWrite(B, 1);
-			digitalWrite(C, 0);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 0);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case '3':
-			digitalWrite(A, 1);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 0);
-			digitalWrite(F, 0);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case '4':
-			digitalWrite(A, 0);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 0);
-			digitalWrite(E, 0);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case '5':
-			digitalWrite(A, 1);
-			digitalWrite(B, 0);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 0);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case '6':
-			digitalWrite(A, 1);
-			digitalWrite(B, 0);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case '7':
-			digitalWrite(A, 1);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 0);
-			digitalWrite(E, 0);
-			digitalWrite(F, 1);
-			digitalWrite(G, 0);
-			digitalWrite(DP, 0);
-			break;
-		case '8':
-			digitalWrite(A, 1);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case '9':
-			digitalWrite(A, 1);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 0);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'a':
-			digitalWrite(A, 1);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 0);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'b':
-			digitalWrite(A, 0);
-			digitalWrite(B, 0);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'c':
-			digitalWrite(A, 0);
-			digitalWrite(B, 0);
-			digitalWrite(C, 0);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 0);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'd':
-			digitalWrite(A, 0);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 0);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'e':
-			digitalWrite(A, 1);
-			digitalWrite(B, 0);
-			digitalWrite(C, 0);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'f':
-			digitalWrite(A, 1);
-			digitalWrite(B, 0);
-			digitalWrite(C, 0);
-			digitalWrite(D, 0);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'A':
-			digitalWrite(A, 1);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 0);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'B':
-			digitalWrite(A, 0);
-			digitalWrite(B, 0);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'C':
-			digitalWrite(A, 0);
-			digitalWrite(B, 0);
-			digitalWrite(C, 0);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 0);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'D':
-			digitalWrite(A, 0);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 0);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'E':
-			digitalWrite(A, 1);
-			digitalWrite(B, 0);
-			digitalWrite(C, 0);
-			digitalWrite(D, 1);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		case 'F':
-			digitalWrite(A, 1);
-			digitalWrite(B, 0);
-			digitalWrite(C, 0);
-			digitalWrite(D, 0);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
-		default:
-			digitalWrite(A, 0);
-			digitalWrite(B, 1);
-			digitalWrite(C, 1);
-			digitalWrite(D, 0);
-			digitalWrite(E, 1);
-			digitalWrite(F, 1);
-			digitalWrite(G, 1);
-			digitalWrite(DP, 0);
-			break;
+	row = (char)buf[0];
+	if(48 <= row && row <= 57){
+		for(int i = 0; i < 8; i++)
+			digitalWrite(SEGMENT_PINS[i], sev_seg[row - 48][i]);
 	}
-						
+	else if(65 <= row && row <= 70){
+		for(int i = 0; i < 8; i++)
+			digitalWrite(SEGMENT_PINS[i], sev_seg[row - 55][i]);
+	}
+	else{
+		for(int i = 0; i < 8; i++)
+			digitalWrite(SEGMENT_PINS[i], sev_seg[16][i]);
+	}
 }
 
 void task()
@@ -274,10 +64,9 @@ void task()
 
 int main()
 {
-
-	struct termios newtio;
-	struct sigaction saio;
-
+    struct termios newtio;
+    struct sigaction saio;
+    
 	fd = open("/dev/serial0", O_RDWR|O_NOCTTY);
 	if(fd<0) {
 		fprintf(stderr, "failed to open port: %s.\r\n", strerror(errno));
@@ -308,23 +97,15 @@ int main()
 	tcflush(fd, TCIFLUSH);
 	tcsetattr(fd, TCSANOW, &newtio);
 
-	write(fd, "interrupt method\r\n", 18);
-	
-
-	if (wiringPiSetup() == -1){
+	 if (wiringPiSetup() == -1){
 		return 1;
-	}
+    	}
 	
-	pinMode(A, OUTPUT);
-	pinMode(B, OUTPUT);
-	pinMode(C, OUTPUT);
-	pinMode(D, OUTPUT);
-	pinMode(E, OUTPUT);
-	pinMode(F, OUTPUT);
-	pinMode(G, OUTPUT);
-	pinMode(DP, OUTPUT);
+   	for(int i = 0; i < 8; i++){
+		pinMode(SEGMENT_PINS[i], OUTPUT);
+   	}
 	
-
+	write(fd, "interrupt method\r\n", 18);
 	while(1) {
 
 		task();
