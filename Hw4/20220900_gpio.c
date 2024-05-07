@@ -5,7 +5,6 @@
 #define SWITCH_PIN 29  // 입력 스위치에 연결된 GPIO 핀
 int SEGMENT_PINS[8] = {0, 7, 24, 23, 22, 2, 3, 25}  // 7-segment에 연결된 GPIO 핀들
 
-void setting();
 
 int main() {
 
@@ -31,7 +30,13 @@ int main() {
 	{1,0,0,0,1,1,1,0}
     };
     
-    setting();
+    wiringPiSetupGpio();
+    
+    pinMode(SWITCH_PIN, INPUT); // 입력 스위치 설정
+
+    for (int i = 0; i < 8; i++) { // 7-segment 설정
+        pinMode(SEGMENT_PINS[i], OUTPUT);
+    }
     
     
     while(1) {
@@ -45,24 +50,14 @@ int main() {
             if(digitalRead(SWITCH_PINS) == 0){
                 btn_state = 0;
             }
-
         }
-
-            for(b = 0; b < 8; b++){
-                digitalWrite(SEGMENT_PINS[b], sevseq[count][b]);
-            }
-            delay(100);
+        for(b = 0; b < 8; b++){
+            digitalWrite(SEGMENT_PINS[b], sevseq[count][b]);
         }
+        delay(100);
+        
     }
     return 0;
 }
 
-void setting() {
-    wiringPiSetupGpio();
-    
-    pinMode(SWITCH_PIN, INPUT); // 입력 스위치 설정
 
-    for (int i = 0; i < 8; i++) { // 7-segment 설정
-        pinMode(SEGMENT_PINS[i], OUTPUT);
-    }
-};
