@@ -5,13 +5,12 @@
 #define SWITCH_PIN 29  // 입력 스위치에 연결된 GPIO 핀
 int SEGMENT_PINS[8] = {0, 7, 24, 23, 22, 2, 3, 25};  // 7-segment에 연결된 GPIO 핀들
 
-
 int main() {
 
     int count = 0;
     int btn_state = 0;
     int b;
-    int sevseq[16][8]={
+    int sev_seg[16][8]={
 	{1,1,1,1,1,1,0,0},
 	{0,1,1,0,0,0,0,0},
 	{1,1,0,1,1,0,1,0},
@@ -52,7 +51,7 @@ int main() {
             }
         }
         for(b = 0; b < 8; b++){
-            digitalWrite(SEGMENT_PINS[b], sevseq[count][b]);
+            digitalWrite(SEGMENT_PINS[b], sev_seg[count][b]);
         }
         delay(100);
         
