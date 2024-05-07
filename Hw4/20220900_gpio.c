@@ -36,15 +36,15 @@ int main(){
    }
 	
     while(1){
-	if(before_state == 0) {
-		if(digitalRead(SW) == 1){
+	if(btn_state == 0) {
+		if(digitalRead(SWITCH_PIN) == 1){
 			row++;
 			row = row % 16;
 			btn_state = 1;
 		}
 	}
-	else if(before_state == 1){
-		if(digitalRead(SW) == 0){
+	else if(btn_state == 1){
+		if(digitalRead(SWITCH_PIN) == 0){
 			btn_state = 0;
 		}
 	}
