@@ -9,7 +9,7 @@
 #include <wiringPi.h>
 
 #define BAUDRATE B1000000
-int SEGMENT_PINS[8] = {0, 7, 2, 23, 22, 24, 25, 3};
+int SEGMENT_PINS[8] = {0, 7, 3, 22, 23, 24, 25, 2};
 int fd;
 char buf[256];
 char row;
