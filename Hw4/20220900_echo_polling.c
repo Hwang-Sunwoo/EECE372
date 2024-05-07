@@ -24,7 +24,7 @@ int main(){
     struct pollfd poll_handler;
     char buf[256];
     char row;
-    int sev_seg[16][8]={
+    int sev_seg[17][8]={
 	{1,1,1,1,1,1,0,0},
 	{0,1,1,0,0,0,0,0},
 	{1,1,0,1,1,0,1,0},
@@ -42,8 +42,8 @@ int main(){
 	{1,0,0,1,1,1,1,0},
 	{1,0,0,0,1,1,1,0},
 	{0,1,1,0,1,1,1,0}
-        };
-    
+    };
+
 	fd = open("/dev/serial0", O_RDWR|O_NOCTTY);
 	if(fd<0) {
 		fprintf(stderr, "failed to open port: %s.\r\n", strerror(errno));
@@ -89,15 +89,15 @@ int main(){
 			write(fd, "echo: ", 6);
 			write(fd, buf, cnt);
 			write(fd, "\r\n", 2);
-        		row = char(buf[0]);
+        		row = (char)buf[0];
 			
 			if(48 <= row && row <= 57){
 				for(int i = 0; i < 8; i++)
-					digitalWrite(SEGMENT_PINS[i], sev_seg[count - 48][i]);
+					digitalWrite(SEGMENT_PINS[i], sev_seg[row - 48][i]);
 			}
 			else if(65 <= row && row <= 70){
 				for(int i = 0; i < 8; i++)
-					digitalWrite(SEGMENT_PINS[i], sev_seg[count - 55][i]);
+					digitalWrite(SEGMENT_PINS[i], sev_seg[row - 55][i]);
 			}
 			else{
 				for(int i = 0; i < 8; i++)
