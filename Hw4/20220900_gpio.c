@@ -48,8 +48,8 @@ int main(){
 			btn_state = 0;
 		}
 	}
-	for(b = 0; b < 8; b++){
-    		digitalWrite(SEGMENT_PINS[b], sev_seg[row][b]);
+	for(int i = 0; i < 8; i++){
+    		digitalWrite(SEGMENT_PINS[i], sev_seg[row][i]);
 	}
 	delay(100);
     }
