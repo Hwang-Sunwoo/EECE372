@@ -19,29 +19,29 @@ void task()
 }
 
 int main(){
-	int fd;
-	struct termios newtio;
-	struct pollfd poll_handler;
-	char buf[256];
+    int fd;
+    struct termios newtio;
+    struct pollfd poll_handler;
+    char buf[256];
     char row;
-    int sevseq[17][8]={
-            {1,1,1,1,1,1,0,0},
-            {0,1,1,0,0,0,0,0},
-            {1,1,0,1,1,0,1,0},
-            {1,1,1,1,0,0,1,0},
-            {0,1,1,0,0,1,1,0},
-            {1,0,1,1,0,1,1,0},
-            {1,0,1,1,1,1,1,0},
-            {1,1,1,0,0,1,0,0},
-            {1,1,1,1,1,1,1,0},
-            {1,1,1,1,0,1,1,0},
-            {1,1,1,0,1,1,1,0},
-            {0,0,1,1,1,1,1,0},
-            {1,0,0,1,1,1,0,0},
-            {0,1,1,1,1,0,1,0},
-            {1,0,0,1,1,1,1,0},
-            {1,0,0,0,1,1,1,0},
-            {0,1,1,0,1,1,1,0}
+    int sev_seg[16][8]={
+	{1,1,1,1,1,1,0,0},
+	{0,1,1,0,0,0,0,0},
+	{1,1,0,1,1,0,1,0},
+	{1,1,1,1,0,0,1,0},
+	{0,1,1,0,0,1,1,0},
+	{1,0,1,1,0,1,1,0},
+	{1,0,1,1,1,1,1,0},
+	{1,1,1,0,0,1,0,0},
+	{1,1,1,1,1,1,1,0},
+	{1,1,1,1,0,1,1,0},
+	{1,1,1,0,1,1,1,0},
+	{0,0,1,1,1,1,1,0},
+	{0,0,0,1,1,0,1,0},
+	{0,1,1,1,1,0,1,0},
+	{1,0,0,1,1,1,1,0},
+	{1,0,0,0,1,1,1,0},
+	{0,1,1,0,1,1,1,0}
         };
     
 	fd = open("/dev/serial0", O_RDWR|O_NOCTTY);
@@ -72,43 +72,44 @@ int main(){
 
 	write(fd, "Polling method\r\n", 16);
 
-    wiringPiSetupGpio();
-
-for (int i = 0; i < 8; i++) { // 7-segment 설정
+    if (wiringPiSetup() == -1){
+	return 1;
+    }
+	
+   for(int i = 0; i < 8; i++){
 	pinMode(SEGMENT_PINS[i], OUTPUT);
-}
+   }
     
-	while(1) {
-		task();
-		if(poll((struct pollfd*)&poll_handler, 1, 2000) > 0) {
-			if(poll_handler.revents & POLLIN) {
-				int cnt = read(fd, buf, sizeof(buf));
-				buf[cnt] = '\0';
-				write(fd, "echo: ", 6);
-				write(fd, buf, cnt);
-				write(fd, "\r\n", 2);
-                		row = char(buf[0]);
-                
-                		if(48 <= row && row <= 57){
-                   			for(int b = 0; b < 8; b++){
-                       			digitalWrite(SEGMENT_PINS[b], sevseq[row - 48][b]);
-                    		}
-                		}else if(65 <= row && row <= 70){
-                    
-                    			for(int b = 0; b < 8; b++){
-                        			digitalWrite(SEGMENT_PINS[b], sevseq[row - 55][b]);
-                    			}
-                		}else{
-                    			for(int b = 0; b < 8; b++){
-                        			digitalWrite(SEGMENT_PINS[b], sevseq[16][b]);
-                    			}
-                		}
+    while(1) {
+	task();
+	if(poll((struct pollfd*)&poll_handler, 1, 2000) > 0) {
+		if(poll_handler.revents & POLLIN) {
+			int cnt = read(fd, buf, sizeof(buf));
+			buf[cnt] = '\0';
+			write(fd, "echo: ", 6);
+			write(fd, buf, cnt);
+			write(fd, "\r\n", 2);
+        		row = char(buf[0]);
+			
+			if(48 <= row && row <= 57){
+				for(int i = 0; i < 8; i++)
+					digitalWrite(SEGMENT_PINS[i], sev_seg[count - 48][i]);
 			}
-			else if(poll_handler.revents & POLLERR) {
-				printf("Error in communication. Abort program\r\n");
-				return 0;
+			else if(65 <= row && row <= 70){
+				for(int i = 0; i < 8; i++)
+					digitalWrite(SEGMENT_PINS[i], sev_seg[count - 55][i]);
 			}
+			else{
+				for(int i = 0; i < 8; i++)
+					digitalWrite(SEGMENT_PINS[i], sev_seg[16][i]);
+			}
+
+		}
+		else if(poll_handler.revents & POLLERR) {
+			printf("Error in communication. Abort program\r\n");
+			return 0;
 		}
 	}
+    }
 	return 0;
 }
