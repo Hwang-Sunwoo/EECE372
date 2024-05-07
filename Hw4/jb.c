@@ -10,7 +10,7 @@
 
 #define BAUDRATE B1000000
 
-int pin_num[] = {29, 28, 23, 22, 21, 27, 26}; // GPIO pins based on wiringPi numbering
+int pin_num[] = {0, 7, 24, 23, 22, 2, 3, 25}; // GPIO pins based on wiringPi numbering
 
 void updateLEDs(char firstChar) {
     const int PIN_COUNT = 7;
