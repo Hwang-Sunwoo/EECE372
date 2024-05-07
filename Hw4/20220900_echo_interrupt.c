@@ -6,11 +6,13 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <wiringPi.h>
 
 #define BAUDRATE B1000000
-
+int SEGMENT_PINS[8] = {0, 7, 24, 23, 22, 2, 3, 25};
 int fd;
 char buf[256];
+char row;
 
 void callback_function(int status)
 {
@@ -20,7 +22,7 @@ void callback_function(int status)
 	write(fd, buf, cnt);
 	write(fd, "\r\n", 2);
 	printf("Received: %s\r\n", buf);
-
+	row = buf[0];
 }
 
 void task()
@@ -31,10 +33,27 @@ void task()
 
 int main()
 {
-
 	struct termios newtio;
 	struct sigaction saio;
-
+	int sev_led[17][8]={
+            {1,1,1,1,1,1,0,0},
+            {0,1,1,0,0,0,0,0},
+            {1,1,0,1,1,0,1,0},
+            {1,1,1,1,0,0,1,0},
+            {0,1,1,0,0,1,1,0},
+            {1,0,1,1,0,1,1,0},
+            {1,0,1,1,1,1,1,0},
+            {1,1,1,0,0,1,0,0},
+            {1,1,1,1,1,1,1,0},
+            {1,1,1,1,0,1,1,0},
+            {1,1,1,0,1,1,1,0},
+            {0,0,1,1,1,1,1,0},
+            {1,0,0,1,1,1,0,0},
+            {0,1,1,1,1,0,1,0},
+            {1,0,0,1,1,1,1,0},
+            {1,0,0,0,1,1,1,0},
+            {0,1,1,0,1,1,1,0}
+        };
 	fd = open("/dev/serial0", O_RDWR|O_NOCTTY);
 	if(fd<0) {
 		fprintf(stderr, "failed to open port: %s.\r\n", strerror(errno));
@@ -65,10 +84,28 @@ int main()
 	tcflush(fd, TCIFLUSH);
 	tcsetattr(fd, TCSANOW, &newtio);
 
+ wiringPiSetupGpio();
+
+for (int i = 0; i < 8; i++) { // 7-segment 설정
+	pinMode(SEGMENT_PINS[i], OUTPUT);
+}
+	
 	write(fd, "interrupt method\r\n", 18);
 	while(1) {
 
 		task();
+		if('0' <= count && count <= '9'){
+			for(int i = 0; i < 8; i++)
+				digitalWrite(SEGMENT_PINS[i], sev_led[row - 48][i]);
+		}
+		else if('A' <= count && count <= 'F'){
+			for(int i = 0; i < 8; i++)
+				digitalWrite(SEGMENT_PINS[i], sev_led[row - 55][i]);
+		}
+		else{
+			for(int i = 0; i < 8; i++)
+				digitalWrite(SEGMENT_PINS[i], sev_led[16][i]);
+		}
 	}
 	return 0;
 }
