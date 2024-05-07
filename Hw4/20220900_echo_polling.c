@@ -10,7 +10,7 @@
 
 #define BAUDRATE B1000000
 
-int SEGMENT_PINS[8] = {0, 7, 24, 23, 22, 2, 3, 25};  // 7-segment에 연결된 GPIO 핀들
+int SEGMENT_PINS[8] = {0, 7, 3, 22, 23, 24, 25, 2};  // 7-segment에 연결된 GPIO 핀들
 
 void task()
 {
