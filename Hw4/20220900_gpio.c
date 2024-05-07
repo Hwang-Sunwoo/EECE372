@@ -3,8 +3,7 @@
 #include <wiringPi.h>
 
 #define SWITCH_PIN 29  // 입력 스위치에 연결된 GPIO 핀
-int SEGMENT_PINS[8] = {0, 7, 2, 23, 22, 24, 25, 3};// 7-segment에 연결된 GPIO 핀들
-
+int SEGMENT_PINS[8] = {0, 7, 3, 22, 23, 24, 25, 2};// 7-segment에 연결된 GPIO 핀들
 int main(){
     int row = 0;
     int btn_state = 0;
