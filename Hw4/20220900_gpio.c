@@ -1,210 +1,55 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <wiringPi.h>
 
-#define SW 29
-#define A 0
-#define B 7
-#define C 24
-#define D 23
-#define E 22
-#define F 2
-#define G 3
-#define DP 25
-
+#define SWITCH_PIN 29  // switch to GPIO
+int SEGMENT_PINS[8] = {0, 7, 3, 22, 23, 24, 25, 2};// 7-segment to GPIO
 int main(){
-	int count = 0;
-	int before_state = 0;
+    int row = 0; // row vraible
+    int btn_state = 0; // state variable
+    int sev_seg[16][8]={ // printing 1 to F using 7-segment using double array
+	{1,1,1,1,1,1,0,0},
+	{0,1,1,0,0,0,0,0},
+	{1,1,0,1,1,0,1,0},
+	{1,1,1,1,0,0,1,0},
+	{0,1,1,0,0,1,1,0},
+	{1,0,1,1,0,1,1,0},
+	{1,0,1,1,1,1,1,0},
+	{1,1,1,0,0,1,0,0},
+	{1,1,1,1,1,1,1,0},
+	{1,1,1,1,0,1,1,0},
+	{1,1,1,0,1,1,1,0},
+	{0,0,1,1,1,1,1,0},
+	{0,0,0,1,1,0,1,0},
+	{0,1,1,1,1,0,1,0},
+	{1,0,0,1,1,1,1,0},
+	{1,0,0,0,1,1,1,0}
+    };
+    if (wiringPiSetup() == -1){ // initializing wiringPi
+	return 1;
+    }
 	
-	if (wiringPiSetup() == -1){
-		return 1;
-	}
+    pinMode(SWITCH_PIN, INPUT); //setting switch as an input
+   for(int i = 0; i < 8; i++){ // setting 7-segment as an output
+	pinMode(SEGMENT_PINS[i], OUTPUT);
+   }
 	
-	pinMode(SW, INPUT);
-	pinMode(A, OUTPUT);
-	pinMode(B, OUTPUT);
-	pinMode(C, OUTPUT);
-	pinMode(D, OUTPUT);
-	pinMode(E, OUTPUT);
-	pinMode(F, OUTPUT);
-	pinMode(G, OUTPUT);
-	pinMode(DP, OUTPUT);
-
-	while(1){
-		if(before_state == 0) {
-			if(digitalRead(SW) == 1){
-				count++;
-				count = count % 16;
-				before_state = 1;
-			}
+    while(1){
+	if(btn_state == 0) { // implementing debouncing
+		if(digitalRead(SWITCH_PIN) == HIGH){ // when switch is closed, stop changing number
+			row++;
+			row = row % 16;
+			btn_state = 1;
 		}
-		else if(before_state == 1){
-			if(digitalRead(SW) == 0){
-				before_state = 0;
-			}
-		}
-		
-		switch(count){
-			case 0:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 0);
-				digitalWrite(DP, 0);
-				break;
-			case 1:
-				digitalWrite(A, 0);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 0);
-				digitalWrite(E, 0);
-				digitalWrite(F, 0);
-				digitalWrite(G, 0);
-				digitalWrite(DP, 0);
-				break;
-			case 2:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 0);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 0);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 3:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 0);
-				digitalWrite(F, 0);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 4:
-				digitalWrite(A, 0);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 0);
-				digitalWrite(E, 0);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 5:
-				digitalWrite(A, 1);
-				digitalWrite(B, 0);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 0);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 6:
-				digitalWrite(A, 1);
-				digitalWrite(B, 0);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 7:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 0);
-				digitalWrite(E, 0);
-				digitalWrite(F, 1);
-				digitalWrite(G, 0);
-				digitalWrite(DP, 0);
-				break;
-			case 8:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 9:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 0);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 10:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 0);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 11:
-				digitalWrite(A, 0);
-				digitalWrite(B, 0);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 12:
-				digitalWrite(A, 0);
-				digitalWrite(B, 0);
-				digitalWrite(C, 0);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 0);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 13:
-				digitalWrite(A, 0);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 0);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 14:
-				digitalWrite(A, 1);
-				digitalWrite(B, 0);
-				digitalWrite(C, 0);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-			case 15:
-				digitalWrite(A, 1);
-				digitalWrite(B, 0);
-				digitalWrite(C, 0);
-				digitalWrite(D, 0);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
-				break;
-		}
-			
-		delay(100);
 	}
+	else if(btn_state == 1){ // when switch is opened, preparing to recieve the input
+		if(digitalRead(SWITCH_PIN) == LOW){
+			btn_state = 0;
+		}
+	}
+	for(int i = 0; i < 8; i++){ // printing sev_seg[][]
+    		digitalWrite(SEGMENT_PINS[i], sev_seg[row][i]);
+	}
+	delay(100);
+    }
 }
