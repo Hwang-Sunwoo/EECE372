@@ -10,7 +10,7 @@
 
 #define BAUDRATE B1000000
 
-int SEGMENT_PINS[8] = {0, 7, 24, 23, 22, 2, 3, 25}  // 7-segment에 연결된 GPIO 핀들
+int SEGMENT_PINS[8] = {0, 7, 24, 23, 22, 2, 3, 25};  // 7-segment에 연결된 GPIO 핀들
 
 void task()
 {
@@ -18,13 +18,11 @@ void task()
 	for(i=0; i<400000000; i++);
 }
 
-int main()
-{
+int main(){
 	int fd;
 	struct termios newtio;
 	struct pollfd poll_handler;
 	char buf[256];
-    int b;
     char row;
     int sevseq[17][8]={
             {1,1,1,1,1,1,0,0},
@@ -75,10 +73,10 @@ int main()
 	write(fd, "Polling method\r\n", 16);
 
     wiringPiSetupGpio();
-    pinMode(SWITCH_PIN, INPUT); // 입력 스위치 설정
-    for (int i = 0; i < 8; i++) { // 7-segment 설정
-        pinMode(SEGMENT_PINS[i], OUTPUT);
-    }
+
+for (int i = 0; i < 8; i++) { // 7-segment 설정
+	pinMode(SEGMENT_PINS[i], OUTPUT);
+}
     
 	while(1) {
 		task();
@@ -89,22 +87,22 @@ int main()
 				write(fd, "echo: ", 6);
 				write(fd, buf, cnt);
 				write(fd, "\r\n", 2);
-                row = char(buf[0]);
+                		row = char(buf[0]);
                 
-                if(48 <= row && row <= 57){
-                    for(b = 0; b < 8; b++){
-                        digitalWrite(SEGMENT_PINS[b], sevseq[row - 48][b]);
-                    }
-                }else if(65 <= row && row <= 70){
+                		if(48 <= row && row <= 57){
+                   			for(int b = 0; b < 8; b++){
+                       			digitalWrite(SEGMENT_PINS[b], sevseq[row - 48][b]);
+                    		}
+                		}else if(65 <= row && row <= 70){
                     
-                    for(b = 0; b < 8; b++){
-                        digitalWrite(SEGMENT_PINS[b], sevseq[row - 55][b]);
-                    }
-                }else{
-                    for(b = 0; b < 8; b++){
-                        digitalWrite(SEGMENT_PINS[b], sevseq[16][b]);
-                    }
-                }
+                    			for(int b = 0; b < 8; b++){
+                        			digitalWrite(SEGMENT_PINS[b], sevseq[row - 55][b]);
+                    			}
+                		}else{
+                    			for(int b = 0; b < 8; b++){
+                        			digitalWrite(SEGMENT_PINS[b], sevseq[16][b]);
+                    			}
+                		}
 			}
 			else if(poll_handler.revents & POLLERR) {
 				printf("Error in communication. Abort program\r\n");
@@ -112,6 +110,5 @@ int main()
 			}
 		}
 	}
-
 	return 0;
 }
