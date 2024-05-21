@@ -54,9 +54,10 @@ int main()
 					fprintf(stderr, "failed to open image file: %s.\r\n", strerror(errno));
 					continue;
 				}
-				for (int i = 0; i < 480; i++){
-					fread(fbuf, 1, 640, fp);
-					write(fd, fbuf, 640);
+				
+				while(!(feof(fp))){
+					fread(fbuf, sizeof(char), sizeof(fbuf),fp);
+					write(fd, fbuf, sizeof(fbuf));
 				}
 				fclose(fp);		
 			}
