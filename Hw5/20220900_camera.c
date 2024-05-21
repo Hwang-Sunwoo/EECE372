@@ -40,7 +40,7 @@ int main()
 
 	while(1) {
 		// Insert your code
-		memset(fbuf, 0 sizeof(fbuf));
+		memset(fbuf, 0, sizeof(fbuf));
 		int cnt = read(fd, buf, sizeof(buf));
 		buf[cnt] = '\0';
 	
