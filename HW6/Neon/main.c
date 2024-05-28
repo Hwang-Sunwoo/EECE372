@@ -53,11 +53,12 @@ void func() {
                 int16x4_t vec_b = vld1_s16(&arr2[8 * k + j]);
                 vec_sum = vmlal_s16(vec_sum, vec_a, vec_b);
             }
-            // Accumulate the results
-            ans_neon[8 * i + j] = vgetq_lane_s32(vec_sum, 0) + vgetq_lane_s32(vec_sum, 1) +
-                                  vgetq_lane_s32(vec_sum, 2) + vgetq_lane_s32(vec_sum, 3);
+            int32_t sum_array[4];
+            vst1q_s32(sum_array, vec_sum);
+            ans_neon[8 * i + j] = sum_array[0] + sum_array[1] + sum_array[2] + sum_array[3];
         }
     }
+
 
     p1 = clock();
     ///////// Matrix multiplication with NEON end///////////
