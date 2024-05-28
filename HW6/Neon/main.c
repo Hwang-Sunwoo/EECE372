@@ -46,18 +46,19 @@ void func() {
     p0 = clock();
 
     for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            int32x4_t vec_sum = vmovq_n_s32(0);
-            for (int k = 0; k < 8; k += 4) {
-                int16x4_t vec_a = vld1_s16(&arr1[8 * i + k]);
-                int16x4_t vec_b = vld1_s16(&arr2[8 * k + j]);
-                vec_sum = vmlal_s16(vec_sum, vec_a, vec_b);
-            }
-            int32_t sum_array[4];
-            vst1q_s32(sum_array, vec_sum);
-            ans_neon[8 * i + j] = sum_array[0] + sum_array[1] + sum_array[2] + sum_array[3];
+    for (int j = 0; j < 8; j++) {
+        int32x4_t vec_sum = vmovq_n_s32(0); // 벡터 내의 모든 요소를 0으로 초기화
+        for (int k = 0; k < 8; k += 4) { // 한 번에 4개의 요소를 처리
+            int16x4_t vec_a = vld1_s16(&arr1[8 * i + k]); // 16비트 단일 요소 벡터 로드
+            int16x4_t vec_b = vld1_s16(&arr2[8 * k + j]); // 16비트 단일 요소 벡터 로드
+            vec_sum = vmlal_s16(vec_sum, vec_a, vec_b); // 곱셈 및 덧셈
         }
+        int32_t sum_array[4]; // 4개의 32비트 정수를 저장할 배열
+        vst1q_s32(sum_array, vec_sum); // 벡터를 배열에 저장
+        ans_neon[8 * i + j] = sum_array[0] + sum_array[1] + sum_array[2] + sum_array[3]; // 배열의 값들을 합산하여 결과 배열에 저장
     }
+}
+
 
 
     p1 = clock();
