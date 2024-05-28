@@ -45,9 +45,23 @@ void func() {
     ///////// Matrix multiplication with NEON start/////////
     p0 = clock();
 
-    /*
-        put your code here
-    */
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            int16x8_t c = vdupq_n_s16(0);  // Initialize NEON vector accumulator to 0
+
+            for (int k = 0; k < 8; k += 8) {
+                int16x8_t a = vld1q_s16(&arr1[i * 8 + k]);  // Load 8 elements from arr1
+                int16x8_t b = vld1q_s16(&arr2[k * 8 + j]);  // Load 8 elements from arr2
+                c = vmlaq_s16(c, a, b);                     // Multiply and accumulate
+            }
+
+            int16x8_t sum_vec = vpaddq_s16(c, c);          // Pairwise add to get the final sum
+            sum_vec = vpaddq_s16(sum_vec, sum_vec);
+            sum_vec = vpaddq_s16(sum_vec, sum_vec);
+
+            ans_neon[i * 8 + j] = vgetq_lane_s16(sum_vec, 0);  // Extract the final result
+        }
+    }
 
     p1 = clock();
     ///////// Matrix multiplication with NEON end///////////
