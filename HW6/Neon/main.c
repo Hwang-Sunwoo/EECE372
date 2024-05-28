@@ -47,15 +47,15 @@ void func() {
 
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
-            int16x8_t vec_sum = vmovq_n_s16(0);
+            int32x4_t vec_sum = vmovq_n_s32(0);
             for (int k = 0; k < 8; k += 4) {
                 int16x4_t vec_a = vld1_s16(&arr1[8 * i + k]);
                 int16x4_t vec_b = vld1_s16(&arr2[8 * k + j]);
                 vec_sum = vmlal_s16(vec_sum, vec_a, vec_b);
             }
             // Accumulate the results
-            ans_neon[8 * i + j] = vgetq_lane_s16(vec_sum, 0) + vgetq_lane_s16(vec_sum, 1) +
-                                  vgetq_lane_s16(vec_sum, 2) + vgetq_lane_s16(vec_sum, 3);
+            ans_neon[8 * i + j] = vgetq_lane_s32(vec_sum, 0) + vgetq_lane_s32(vec_sum, 1) +
+                                  vgetq_lane_s32(vec_sum, 2) + vgetq_lane_s32(vec_sum, 3);
         }
     }
 
