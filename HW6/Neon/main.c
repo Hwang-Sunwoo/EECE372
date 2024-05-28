@@ -43,23 +43,23 @@ void func() {
     ///////////////////////  Matrix multiplication with for loop end  /////////////////
 
     ///////// Matrix multiplication with NEON start/////////
-    p0 = clock();
+     p0 = clock();
 
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
-            int16x8_t c = vdupq_n_s16(0);  // Initialize NEON vector accumulator to 0
-
+            int16x8_t sum_vec = vdupq_n_s16(0);
             for (int k = 0; k < 8; k += 8) {
-                int16x8_t a = vld1q_s16(&arr1[i * 8 + k]);  // Load 8 elements from arr1
-                int16x8_t b = vld1q_s16(&arr2[k * 8 + j]);  // Load 8 elements from arr2
-                c = vmlaq_s16(c, a, b);                     // Multiply and accumulate
+                int16x8_t a_vec = vld1q_s16(&arr1[i * 8 + k]);
+                int16x8_t b_vec = vld1q_s16(&arr2[k * 8 + j]);
+                sum_vec = vmlaq_s16(sum_vec, a_vec, b_vec);
             }
-
-            int16x8_t sum_vec = vpaddq_s16(c, c);          // Pairwise add to get the final sum
-            sum_vec = vpaddq_s16(sum_vec, sum_vec);
-            sum_vec = vpaddq_s16(sum_vec, sum_vec);
-
-            ans_neon[i * 8 + j] = vgetq_lane_s16(sum_vec, 0);  // Extract the final result
+            int16_t sum_array[8];
+            vst1q_s16(sum_array, sum_vec);
+            int16_t sum = 0;
+            for (int l = 0; l < 8; l++) {
+                sum += sum_array[l];
+            }
+            ans_neon[i * 8 + j] = sum;
         }
     }
 
