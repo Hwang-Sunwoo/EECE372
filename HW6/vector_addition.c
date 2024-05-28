@@ -72,9 +72,29 @@ void vec_simple(double *x, double *y, double *z) {
 void vec_slicing(double *x, double *y, double *z) {
     omp_set_num_threads(6);
     // Write Your Code
+    #pragma omp parallel
+    {
+        int thread_id = omp_get_thread_num();
+        int num_threads = omp_get_num_threads();
+        for (int i = thread_id; i < ARRAY_SIZE; i += num_threads) {
+            z[i] = x[i] + y[i];
+        }
+    }
 }
 
 void vec_chunking(double *x, double *y, double *z) {
     omp_set_num_threads(6);
     // Write Your Code
+    #pragma omp parallel
+    {
+        int thread_id = omp_get_thread_num();
+        int num_threads = omp_get_num_threads();
+        int chunk_size = (ARRAY_SIZE + num_threads - 1) / num_threads;
+        int start = thread_id * chunk_size;
+        int end = (start + chunk_size > ARRAY_SIZE) ? ARRAY_SIZE : start + chunk_size;
+
+        for (int i = start; i < end; i++) {
+            z[i] = x[i] + y[i];
+        }
+    }
 }
