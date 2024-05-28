@@ -43,24 +43,23 @@ void func() {
     ///////////////////////  Matrix multiplication with for loop end  /////////////////
 
     ///////// Matrix multiplication with NEON start/////////
-p0 = clock();
+    p0 = clock();
 
-for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 8; j++) {
-        int32x4_t vec_sum = vmovq_n_s32(0); // Initialize vector sum to 0
-        for (int k = 0; k < 8; k += 4) { // Process 4 elements at a time
-            int16x4_t vec_a = vld1_s16(&arr1[8 * i + k]); // Load 4 elements from arr1
-            int16x4_t vec_b = vld1_s16(&arr2[8 * k + j]); // Load 4 elements from arr2
-            vec_sum = vmlal_s16(vec_sum, vec_a, vec_b); // Multiply and accumulate
-        }
-        int32_t sum_array[4]; // Array to store 4 32-bit integers
-        vst1q_s32(sum_array, vec_sum); // Store the vector sum into the array
-        ans_neon[8 * i + j] = sum_array[0] + sum_array[1] + sum_array[2] + sum_array[3]; // Sum the elements in the array and store the result
-    }
-}
+    int32x4_t vec_1;
+	int32x4_t vec_2;
+	int32x4_t temp1 = vdupq_n_s32(0); // reset register to 0 value
 
-p1 = clock();
-///////// Matrix multiplication with NEON end///////////
+    vec_1 = vld1q_s32(arr1);	// load arr1 values to vec_1 register
+	vec_2 = vld1q_s32(arr2);	// load arr2 values to vec_2 register
+	temp1 = vmulq_s32(vec_1, vec_2);	// multipicate vec_1 and vec_2
+
+    
+
+	vst1q_s32(arr3, temp1);	// store temp1 values to arr3 
+
+
+    p1 = clock();
+    ///////// Matrix multiplication with NEON end///////////
 
 
     int check = 0;
