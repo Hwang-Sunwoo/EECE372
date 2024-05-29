@@ -71,45 +71,38 @@ void vec_simple(double *x, double *y, double *z) {
 
 void vec_slicing(double *x, double *y, double *z) {
 
-	omp_set_num_threads(6); // Set the number of threads to 6
-
-#pragma omp parallel
-	{	
-		int thread_ID = omp_get_thread_num();
-
-		switch (thread_ID) { // Perform different actions depending on the value of the thread ID
-		case 0:
-			// thread 0 is i % 6 == 0 (i = 0, 6, 12,...)
-			for (int i = 0; i < ARRAY_SIZE; i += 6)
+    omp_set_num_threads(6);
+    // Write Your Code
+    #pragma omp parallel
+    {
+        int thread_id = omp_get_thread_num();
+        int num_threads = omp_get_num_threads();
+        switch(thread_id){
+        case 0:
+			for (int i = 0; i < ARRAY_SIZE; i +=  num_threads)
 				z[i] = x[i] + y[i];
 			break;
 		case 1:
-			// thread 1 is i % 6 == 1 (i = 1, 7, 13,...)
-			for (int i = 1; i < ARRAY_SIZE; i += 6)
+			for (int i = 1; i < ARRAY_SIZE; i +=  num_threads)
 				z[i] = x[i] + y[i];
 			break;
 		case 2:
-			// thread 2 is i % 6 == 2 (i = 2,8,14,...)
-			for (int i = 2; i < ARRAY_SIZE; i += 6)
+			for (int i = 2; i < ARRAY_SIZE; i +=  num_threads)
 				z[i] = x[i] + y[i];
 			break;
 		case 3:
-			// thread 3 is i % 6 == 3 (i = 3,9,15,...)
-			for (int i = 3; i < ARRAY_SIZE; i += 6)
+			for (int i = 3; i < ARRAY_SIZE; i +=  num_threads)
 				z[i] = x[i] + y[i];
 			break;
 		case 4:
-			// thread 4 is i % 6 == 4 (i = 4,10,16,...)
-			for (int i = 4; i < ARRAY_SIZE; i += 6)
+			for (int i = 4; i < ARRAY_SIZE; i +=  num_threads)
 				z[i] = x[i] + y[i];
 			break;
 		case 5:
-			// thread 5 is i % 6 == 5 (i = 5,11,17,...)
-			for (int i = 5; i < ARRAY_SIZE; i += 6)
+			for (int i = 5; i < ARRAY_SIZE; i +=  num_threads)
 				z[i] = x[i] + y[i];
 			break;
 		}
-	
     }
 }
 
