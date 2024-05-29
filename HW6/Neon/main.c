@@ -42,76 +42,59 @@ void func() {
     np1 = clock();
     ///////////////////////  Matrix multiplication with for loop end  /////////////////
 
-    ///////// Matrix multiplication with NEON start/////////
-    memset(ans_neon, 0, sizeof(int16_t) * 8 * 8);
+ ///////// Matrix multiplication with NEON start/////////
     p0 = clock();
 
-	 int16x4_t A_row0_0 = vld1_s16(&arr1[0]);
-    int16x4_t A_row0_1 = vld1_s16(&arr1[4]);
-    int16x4_t A_row1_0 = vld1_s16(&arr1[8]);
-    int16x4_t A_row1_1 = vld1_s16(&arr1[12]);
-    int16x4_t A_row2_0 = vld1_s16(&arr1[16]);
-    int16x4_t A_row2_1 = vld1_s16(&arr1[20]);
-    int16x4_t A_row3_0 = vld1_s16(&arr1[24]);
-    int16x4_t A_row3_1 = vld1_s16(&arr1[28]);
-    int16x4_t A_row4_0 = vld1_s16(&arr1[32]);
-    int16x4_t A_row4_1 = vld1_s16(&arr1[36]);
-    int16x4_t A_row5_0 = vld1_s16(&arr1[40]);
-    int16x4_t A_row5_1 = vld1_s16(&arr1[44]);
-    int16x4_t A_row6_0 = vld1_s16(&arr1[48]);
-    int16x4_t A_row6_1 = vld1_s16(&arr1[52]);
-    int16x4_t A_row7_0 = vld1_s16(&arr1[56]);
-    int16x4_t A_row7_1 = vld1_s16(&arr1[60]);
+    // Load rows of arr1
+    int16x8_t A_row0 = vld1q_s16(&arr1[0]);
+    int16x8_t A_row1 = vld1q_s16(&arr1[8]);
+    int16x8_t A_row2 = vld1q_s16(&arr1[16]);
+    int16x8_t A_row3 = vld1q_s16(&arr1[24]);
+    int16x8_t A_row4 = vld1q_s16(&arr1[32]);
+    int16x8_t A_row5 = vld1q_s16(&arr1[40]);
+    int16x8_t A_row6 = vld1q_s16(&arr1[48]);
+    int16x8_t A_row7 = vld1q_s16(&arr1[56]);
 
-    int16x4_t B_col0_0 = vld1_s16(&arr2[0]);
-    int16x4_t B_col0_1 = vld1_s16(&arr2[8]);
-    int16x4_t B_col0_2 = vld1_s16(&arr2[16]);
-    int16x4_t B_col0_3 = vld1_s16(&arr2[24]);
-    int16x4_t B_col0_4 = vld1_s16(&arr2[32]);
-    int16x4_t B_col0_5 = vld1_s16(&arr2[40]);
-    int16x4_t B_col0_6 = vld1_s16(&arr2[48]);
-    int16x4_t B_col0_7 = vld1_s16(&arr2[56]);
+    // Initialize result vectors
+    int32x4_t C_row0 = vmovq_n_s32(0);
+    int32x4_t C_row1 = vmovq_n_s32(0);
+    int32x4_t C_row2 = vmovq_n_s32(0);
+    int32x4_t C_row3 = vmovq_n_s32(0);
+    int32x4_t C_row4 = vmovq_n_s32(0);
+    int32x4_t C_row5 = vmovq_n_s32(0);
+    int32x4_t C_row6 = vmovq_n_s32(0);
+    int32x4_t C_row7 = vmovq_n_s32(0);
 
-    int32x4_t C_row0 = vmull_lane_s16(A_row0_0, B_col0_0, 0);
-    C_row0 = vmlal_lane_s16(C_row0, A_row0_1, B_col0_0, 1);
-    C_row0 = vmlal_lane_s16(C_row0, A_row0_1, B_col0_0, 2);
-    C_row0 = vmlal_lane_s16(C_row0, A_row0_1, B_col0_0, 3);
+    for (int i = 0; i < 8; i++) {
+        int16x8_t B_col = vld1q_s16(&arr2[i * 8]);
 
-    int32x4_t C_row1 = vmull_lane_s16(A_row1_0, B_col0_0, 0);
-    C_row1 = vmlal_lane_s16(C_row1, A_row1_1, B_col0_0, 1);
-    C_row1 = vmlal_lane_s16(C_row1, A_row1_1, B_col0_0, 2);
-    C_row1 = vmlal_lane_s16(C_row1, A_row1_1, B_col0_0, 3);
+        // Multiply and accumulate
+        C_row0 = vmlal_laneq_s16(C_row0, vget_low_s16(A_row0), B_col, i);
+        C_row0 = vmlal_laneq_s16(C_row0, vget_high_s16(A_row0), B_col, i);
+        
+        C_row1 = vmlal_laneq_s16(C_row1, vget_low_s16(A_row1), B_col, i);
+        C_row1 = vmlal_laneq_s16(C_row1, vget_high_s16(A_row1), B_col, i);
+        
+        C_row2 = vmlal_laneq_s16(C_row2, vget_low_s16(A_row2), B_col, i);
+        C_row2 = vmlal_laneq_s16(C_row2, vget_high_s16(A_row2), B_col, i);
+        
+        C_row3 = vmlal_laneq_s16(C_row3, vget_low_s16(A_row3), B_col, i);
+        C_row3 = vmlal_laneq_s16(C_row3, vget_high_s16(A_row3), B_col, i);
+        
+        C_row4 = vmlal_laneq_s16(C_row4, vget_low_s16(A_row4), B_col, i);
+        C_row4 = vmlal_laneq_s16(C_row4, vget_high_s16(A_row4), B_col, i);
+        
+        C_row5 = vmlal_laneq_s16(C_row5, vget_low_s16(A_row5), B_col, i);
+        C_row5 = vmlal_laneq_s16(C_row5, vget_high_s16(A_row5), B_col, i);
+        
+        C_row6 = vmlal_laneq_s16(C_row6, vget_low_s16(A_row6), B_col, i);
+        C_row6 = vmlal_laneq_s16(C_row6, vget_high_s16(A_row6), B_col, i);
+        
+        C_row7 = vmlal_laneq_s16(C_row7, vget_low_s16(A_row7), B_col, i);
+        C_row7 = vmlal_laneq_s16(C_row7, vget_high_s16(A_row7), B_col, i);
+    }
 
-    int32x4_t C_row2 = vmull_lane_s16(A_row2_0, B_col0_0, 0);
-    C_row2 = vmlal_lane_s16(C_row2, A_row2_1, B_col0_0, 1);
-    C_row2 = vmlal_lane_s16(C_row2, A_row2_1, B_col0_0, 2);
-    C_row2 = vmlal_lane_s16(C_row2, A_row2_1, B_col0_0, 3);
-
-    int32x4_t C_row3 = vmull_lane_s16(A_row3_0, B_col0_0, 0);
-    C_row3 = vmlal_lane_s16(C_row3, A_row3_1, B_col0_0, 1);
-    C_row3 = vmlal_lane_s16(C_row3, A_row3_1, B_col0_0, 2);
-    C_row3 = vmlal_lane_s16(C_row3, A_row3_1, B_col0_0, 3);
-
-    int32x4_t C_row4 = vmull_lane_s16(A_row4_0, B_col0_0, 0);
-    C_row4 = vmlal_lane_s16(C_row4, A_row4_1, B_col0_0, 1);
-    C_row4 = vmlal_lane_s16(C_row4, A_row4_1, B_col0_0, 2);
-    C_row4 = vmlal_lane_s16(C_row4, A_row4_1, B_col0_0, 3);
-
-    int32x4_t C_row5 = vmull_lane_s16(A_row5_0, B_col0_0, 0);
-    C_row5 = vmlal_lane_s16(C_row5, A_row5_1, B_col0_0, 1);
-    C_row5 = vmlal_lane_s16(C_row5, A_row5_1, B_col0_0, 2);
-    C_row5 = vmlal_lane_s16(C_row5, A_row5_1, B_col0_0, 3);
-
-    int32x4_t C_row6 = vmull_lane_s16(A_row6_0, B_col0_0, 0);
-    C_row6 = vmlal_lane_s16(C_row6, A_row6_1, B_col0_0, 1);
-    C_row6 = vmlal_lane_s16(C_row6, A_row6_1, B_col0_0, 2);
-    C_row6 = vmlal_lane_s16(C_row6, A_row6_1, B_col0_0, 3);
-
-    int32x4_t C_row7 = vmull_lane_s16(A_row7_0, B_col0_0, 0);
-    C_row7 = vmlal_lane_s16(C_row7, A_row7_1, B_col0_0, 1);
-    C_row7 = vmlal_lane_s16(C_row7, A_row7_1, B_col0_0, 2);
-    C_row7 = vmlal_lane_s16(C_row7, A_row7_1, B_col0_0, 3);
-
+    // Store results
     vst1q_s32((int32_t*)&ans_neon[0], C_row0);
     vst1q_s32((int32_t*)&ans_neon[8], C_row1);
     vst1q_s32((int32_t*)&ans_neon[16], C_row2);
