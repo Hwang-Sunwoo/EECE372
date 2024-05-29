@@ -57,7 +57,7 @@ void func() {
 	int16x8_t temp;
 
 	p0 = clock(); // Operation starts after this line
-
+	//not using for loop
 	temp = vmulq_s16(vec_col[0], vdupq_n_s16(vgetq_lane_s16(vec_row[0], 0)));
 	vec_ans[0] = vaddq_s16(vec_ans[0], temp);
 	temp = vmulq_s16(vec_col[1], vdupq_n_s16(vgetq_lane_s16(vec_row[0], 1)));
