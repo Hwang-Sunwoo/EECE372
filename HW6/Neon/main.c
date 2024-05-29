@@ -44,7 +44,7 @@ void func() {
 
    ///////// Matrix multiplication with NEON start/////////
 
-    // Load 8x8 matrix rows of arr1
+
     int16x8_t arr1_0 = vld1q_s16(arr1);       // 1st row of arr1
     int16x8_t arr1_1 = vld1q_s16(arr1 + 8);   // 2nd row of arr1
     int16x8_t arr1_2 = vld1q_s16(arr1 + 16);  // 3rd row of arr1
@@ -54,18 +54,19 @@ void func() {
     int16x8_t arr1_6 = vld1q_s16(arr1 + 48);  // 7th row of arr1
     int16x8_t arr1_7 = vld1q_s16(arr1 + 56);  // 8th row of arr1
 
-    // Load 8x8 matrix columns of arr2 using vld8q_s16 for NEON
-    int16x8x8_t mt = vld8q_s16(arr2);  // Load 8 columns of arr2
+    // Load 8x8 matrix columns of arr2 using vld4q_s16 for NEON
+    int16x8x4_t mt0 = vld4q_s16(arr2);       // Load first 4 columns of arr2
+    int16x8x4_t mt1 = vld4q_s16(arr2 + 32);  // Load last 4 columns of arr2
 
     // Extract columns of arr2
-    int16x8_t arr2_0 = mt.val[0];
-    int16x8_t arr2_1 = mt.val[1];
-    int16x8_t arr2_2 = mt.val[2];
-    int16x8_t arr2_3 = mt.val[3];
-    int16x8_t arr2_4 = mt.val[4];
-    int16x8_t arr2_5 = mt.val[5];
-    int16x8_t arr2_6 = mt.val[6];
-    int16x8_t arr2_7 = mt.val[7];
+    int16x8_t arr2_0 = mt0.val[0];
+    int16x8_t arr2_1 = mt0.val[1];
+    int16x8_t arr2_2 = mt0.val[2];
+    int16x8_t arr2_3 = mt0.val[3];
+    int16x8_t arr2_4 = mt1.val[0];
+    int16x8_t arr2_5 = mt1.val[1];
+    int16x8_t arr2_6 = mt1.val[2];
+    int16x8_t arr2_7 = mt1.val[3];
 
     int16x8_t ans;
 
@@ -201,8 +202,17 @@ void func() {
     ans = vmulq_s16(arr1_7, arr2_3);
     ans_neon[59] = vaddvq_s16(ans);
     ans = vmulq_s16(arr1_7, arr2_4);
-   
-    p1 = clock(); // Operation starts after this line
+    ans_neon[60] = vaddvq_s16(ans);
+    ans = vmulq_s16(arr1_7, arr2_5);
+    ans_neon[61] = vaddvq_s16(ans);
+    ans = vmulq_s16(arr1_7, arr2_6);
+    ans_neon[62] = vaddvq_s16(ans);
+    ans = vmulq_s16(arr1_7, arr2_7);
+    ans_neon[63] = vaddvq_s16(ans);
+
+    p1 = clock();
+    // Matrix multiplication ends
+
 
 	/*
 	int16x8_t vec_row[8];
