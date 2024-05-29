@@ -196,14 +196,14 @@ void func() {
 	
 
    
-	vst1_s16(ans_neon, vec_ans[0]);
-	vst1_s16(ans_neon + 8, vec_ans[1]);
-	vst1_s16(ans_neon + 16, vec_ans[2]);
-	vst1_s16(ans_neon + 24, vec_ans[3]);
-	vst1_s16(ans_neon + 32, vec_ans[4]);
-	vst1_s16(ans_neon + 40, vec_ans[5]);
-	vst1_s16(ans_neon + 48, vec_ans[6]);
-	vst1_s16(ans_neon + 56, vec_ans[7]);
+	vst1q_s16(ans_neon, vec_ans[0]);
+	vst1q_s16(ans_neon + 8, vec_ans[1]);
+	vst1q_s16(ans_neon + 16, vec_ans[2]);
+	vst1q_s16(ans_neon + 24, vec_ans[3]);
+	vst1q_s16(ans_neon + 32, vec_ans[4]);
+	vst1q_s16(ans_neon + 40, vec_ans[5]);
+	vst1q_s16(ans_neon + 48, vec_ans[6]);
+	vst1q_s16(ans_neon + 56, vec_ans[7]);
 	
 	p1 = clock();	
 /*
