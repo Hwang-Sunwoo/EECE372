@@ -44,17 +44,17 @@ void func() {
 
    ///////// Matrix multiplication with NEON start/////////
 	//make variable
-	int16x8_t vec_row[8];
-	int16x8_t vec_col[8];
-	int16x8_t vec_ans[8];
+	int16x4_t vec_row[8];
+	int16x4_t vec_col[8];
+	int16x4_t vec_ans[8];
 
 	for(int i = 0; i < 8; i++){
-	    vec_row[i] = =vld1_s16(arr1 + (i * 8));
-	    vec_col[i] = =vld1_s16(arr2 + (i * 8));
+	    vec_row[i] = vld1_s16(arr1 + (i * 8));
+	    vec_col[i] = vld1_s16(arr2 + (i * 8));
 	    vec_ans[i] = vdup_n_s16(0);
 	}
 
-	int16x8_t temp;
+	int16x4_t temp;
 
 	p0 = clock(); // Operation starts after this line
 
