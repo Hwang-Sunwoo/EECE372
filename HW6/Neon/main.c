@@ -43,20 +43,83 @@ void func() {
     ///////////////////////  Matrix multiplication with for loop end  /////////////////
 
     ///////// Matrix multiplication with NEON start/////////
+    memset(ans_neon, 0, sizeof(int16_t) * 8 * 8);
     p0 = clock();
 
-    int32x4_t vec_1;
-	int32x4_t vec_2;
-	int32x4_t temp1 = vdupq_n_s32(0); // reset register to 0 value
+	 int16x4_t A_row0_0 = vld1_s16(&arr1[0]);
+    int16x4_t A_row0_1 = vld1_s16(&arr1[4]);
+    int16x4_t A_row1_0 = vld1_s16(&arr1[8]);
+    int16x4_t A_row1_1 = vld1_s16(&arr1[12]);
+    int16x4_t A_row2_0 = vld1_s16(&arr1[16]);
+    int16x4_t A_row2_1 = vld1_s16(&arr1[20]);
+    int16x4_t A_row3_0 = vld1_s16(&arr1[24]);
+    int16x4_t A_row3_1 = vld1_s16(&arr1[28]);
+    int16x4_t A_row4_0 = vld1_s16(&arr1[32]);
+    int16x4_t A_row4_1 = vld1_s16(&arr1[36]);
+    int16x4_t A_row5_0 = vld1_s16(&arr1[40]);
+    int16x4_t A_row5_1 = vld1_s16(&arr1[44]);
+    int16x4_t A_row6_0 = vld1_s16(&arr1[48]);
+    int16x4_t A_row6_1 = vld1_s16(&arr1[52]);
+    int16x4_t A_row7_0 = vld1_s16(&arr1[56]);
+    int16x4_t A_row7_1 = vld1_s16(&arr1[60]);
 
-    vec_1 = vld1q_s32(arr1);	// load arr1 values to vec_1 register
-	vec_2 = vld1q_s32(arr2);	// load arr2 values to vec_2 register
-	temp1 = vmulq_s32(vec_1, vec_2);	// multipicate vec_1 and vec_2
+    int16x4_t B_col0_0 = vld1_s16(&arr2[0]);
+    int16x4_t B_col0_1 = vld1_s16(&arr2[8]);
+    int16x4_t B_col0_2 = vld1_s16(&arr2[16]);
+    int16x4_t B_col0_3 = vld1_s16(&arr2[24]);
+    int16x4_t B_col0_4 = vld1_s16(&arr2[32]);
+    int16x4_t B_col0_5 = vld1_s16(&arr2[40]);
+    int16x4_t B_col0_6 = vld1_s16(&arr2[48]);
+    int16x4_t B_col0_7 = vld1_s16(&arr2[56]);
 
-    
+    int32x4_t C_row0 = vmull_lane_s16(A_row0_0, B_col0_0, 0);
+    C_row0 = vmlal_lane_s16(C_row0, A_row0_1, B_col0_0, 1);
+    C_row0 = vmlal_lane_s16(C_row0, A_row0_1, B_col0_0, 2);
+    C_row0 = vmlal_lane_s16(C_row0, A_row0_1, B_col0_0, 3);
 
-	vst1q_s32(arr3, temp1);	// store temp1 values to arr3 
+    int32x4_t C_row1 = vmull_lane_s16(A_row1_0, B_col0_0, 0);
+    C_row1 = vmlal_lane_s16(C_row1, A_row1_1, B_col0_0, 1);
+    C_row1 = vmlal_lane_s16(C_row1, A_row1_1, B_col0_0, 2);
+    C_row1 = vmlal_lane_s16(C_row1, A_row1_1, B_col0_0, 3);
 
+    int32x4_t C_row2 = vmull_lane_s16(A_row2_0, B_col0_0, 0);
+    C_row2 = vmlal_lane_s16(C_row2, A_row2_1, B_col0_0, 1);
+    C_row2 = vmlal_lane_s16(C_row2, A_row2_1, B_col0_0, 2);
+    C_row2 = vmlal_lane_s16(C_row2, A_row2_1, B_col0_0, 3);
+
+    int32x4_t C_row3 = vmull_lane_s16(A_row3_0, B_col0_0, 0);
+    C_row3 = vmlal_lane_s16(C_row3, A_row3_1, B_col0_0, 1);
+    C_row3 = vmlal_lane_s16(C_row3, A_row3_1, B_col0_0, 2);
+    C_row3 = vmlal_lane_s16(C_row3, A_row3_1, B_col0_0, 3);
+
+    int32x4_t C_row4 = vmull_lane_s16(A_row4_0, B_col0_0, 0);
+    C_row4 = vmlal_lane_s16(C_row4, A_row4_1, B_col0_0, 1);
+    C_row4 = vmlal_lane_s16(C_row4, A_row4_1, B_col0_0, 2);
+    C_row4 = vmlal_lane_s16(C_row4, A_row4_1, B_col0_0, 3);
+
+    int32x4_t C_row5 = vmull_lane_s16(A_row5_0, B_col0_0, 0);
+    C_row5 = vmlal_lane_s16(C_row5, A_row5_1, B_col0_0, 1);
+    C_row5 = vmlal_lane_s16(C_row5, A_row5_1, B_col0_0, 2);
+    C_row5 = vmlal_lane_s16(C_row5, A_row5_1, B_col0_0, 3);
+
+    int32x4_t C_row6 = vmull_lane_s16(A_row6_0, B_col0_0, 0);
+    C_row6 = vmlal_lane_s16(C_row6, A_row6_1, B_col0_0, 1);
+    C_row6 = vmlal_lane_s16(C_row6, A_row6_1, B_col0_0, 2);
+    C_row6 = vmlal_lane_s16(C_row6, A_row6_1, B_col0_0, 3);
+
+    int32x4_t C_row7 = vmull_lane_s16(A_row7_0, B_col0_0, 0);
+    C_row7 = vmlal_lane_s16(C_row7, A_row7_1, B_col0_0, 1);
+    C_row7 = vmlal_lane_s16(C_row7, A_row7_1, B_col0_0, 2);
+    C_row7 = vmlal_lane_s16(C_row7, A_row7_1, B_col0_0, 3);
+
+    vst1q_s32((int32_t*)&ans_neon[0], C_row0);
+    vst1q_s32((int32_t*)&ans_neon[8], C_row1);
+    vst1q_s32((int32_t*)&ans_neon[16], C_row2);
+    vst1q_s32((int32_t*)&ans_neon[24], C_row3);
+    vst1q_s32((int32_t*)&ans_neon[32], C_row4);
+    vst1q_s32((int32_t*)&ans_neon[40], C_row5);
+    vst1q_s32((int32_t*)&ans_neon[48], C_row6);
+    vst1q_s32((int32_t*)&ans_neon[56], C_row7);
 
     p1 = clock();
     ///////// Matrix multiplication with NEON end///////////
