@@ -43,7 +43,170 @@ void func() {
     ///////////////////////  Matrix multiplication with for loop end  /////////////////
 
    ///////// Matrix multiplication with NEON start/////////
+	//make variable
+	int16x8_t vec_row[8];
+	int16x8_t vec_col[8];
+	int16x8_t vec_ans[8];
 
+	for(int i = 0; i < 8; i++){
+	    vec_row[i] = =vld1_s16(arr1 + (i * 8));
+	    vec_col[i] = =vld1_s16(arr2 + (i * 8));
+	    vec_ans[i] = vdup_n_s16(0);
+	}
+
+	int16x8_t temp;
+
+	p0 = clock(); // Operation starts after this line
+
+	temp = vmul_s16(vec_col[0], vget_lane_s16(vec_row[0], 0));
+	vec_ans[0] = vadd_s16(vec_ans[0], temp);
+	temp = vmul_s16(vec_col[1], vget_lane_s16(vec_row[0], 1));
+	vec_ans[0] = vadd_s16(vec_ans[0], temp);
+	temp = vmul_s16(vec_col[2], vget_lane_s16(vec_row[0], 2));
+	vec_ans[0] = vadd_s16(vec_ans[0], temp);
+	temp = vmul_s16(vec_col[3], vget_lane_s16(vec_row[0], 3));
+	vec_ans[0] = vadd_s16(vec_ans[0], temp);
+	temp = vmul_s16(vec_col[4], vget_lane_s16(vec_row[0], 4));
+	vec_ans[0] = vadd_s16(vec_ans[0], temp);
+	temp = vmul_s16(vec_col[5], vget_lane_s16(vec_row[0], 5));
+	vec_ans[0] = vadd_s16(vec_ans[0], temp);
+	temp = vmul_s16(vec_col[6], vget_lane_s16(vec_row[0], 6));
+	vec_ans[0] = vadd_s16(vec_ans[0], temp);
+	temp = vmul_s16(vec_col[7], vget_lane_s16(vec_row[0], 7));
+	vec_ans[0] = vadd_s16(vec_ans[0], temp);
+
+	temp = vmul_s16(vec_col[0], vget_lane_s16(vec_row[1], 0));
+	vec_ans[1] = vadd_s16(vec_ans[1], temp);
+	temp = vmul_s16(vec_col[1], vget_lane_s16(vec_row[1], 1));
+	vec_ans[1] = vadd_s16(vec_ans[1], temp);
+	temp = vmul_s16(vec_col[2], vget_lane_s16(vec_row[1], 2));
+	vec_ans[1] = vadd_s16(vec_ans[1], temp);
+	temp = vmul_s16(vec_col[3], vget_lane_s16(vec_row[1], 3));
+	vec_ans[1] = vadd_s16(vec_ans[1], temp);
+	temp = vmul_s16(vec_col[4], vget_lane_s16(vec_row[1], 4));
+	vec_ans[1] = vadd_s16(vec_ans[1], temp);
+	temp = vmul_s16(vec_col[5], vget_lane_s16(vec_row[1], 5));
+	vec_ans[1] = vadd_s16(vec_ans[1], temp);
+	temp = vmul_s16(vec_col[6], vget_lane_s16(vec_row[1], 6));
+	vec_ans[1] = vadd_s16(vec_ans[1], temp);
+	temp = vmul_s16(vec_col[7], vget_lane_s16(vec_row[1], 7));
+	vec_ans[1] = vadd_s16(vec_ans[1], temp);
+
+	temp = vmul_s16(vec_col[0], vget_lane_s16(vec_row[2], 0));
+	vec_ans[2] = vadd_s16(vec_ans[2], temp);
+	temp = vmul_s16(vec_col[1], vget_lane_s16(vec_row[2], 1));
+	vec_ans[2] = vadd_s16(vec_ans[2], temp);
+	temp = vmul_s16(vec_col[2], vget_lane_s16(vec_row[2], 2));
+	vec_ans[2] = vadd_s16(vec_ans[2], temp);
+	temp = vmul_s16(vec_col[3], vget_lane_s16(vec_row[2], 3));
+	vec_ans[2] = vadd_s16(vec_ans[2], temp);
+	temp = vmul_s16(vec_col[4], vget_lane_s16(vec_row[2], 4));
+	vec_ans[2] = vadd_s16(vec_ans[2], temp);
+	temp = vmul_s16(vec_col[5], vget_lane_s16(vec_row[2], 5));
+	vec_ans[2] = vadd_s16(vec_ans[2], temp);
+	temp = vmul_s16(vec_col[6], vget_lane_s16(vec_row[2], 6));
+	vec_ans[2] = vadd_s16(vec_ans[2], temp);
+	temp = vmul_s16(vec_col[7], vget_lane_s16(vec_row[2], 7));
+	vec_ans[2] = vadd_s16(vec_ans[2], temp);
+
+	temp = vmul_s16(vec_col[0], vget_lane_s16(vec_row[3], 0));
+	vec_ans[3] = vadd_s16(vec_ans[3], temp);
+	temp = vmul_s16(vec_col[1], vget_lane_s16(vec_row[3], 1));
+	vec_ans[3] = vadd_s16(vec_ans[3], temp);
+	temp = vmul_s16(vec_col[2], vget_lane_s16(vec_row[3], 2));
+	vec_ans[3] = vadd_s16(vec_ans[3], temp);
+	temp = vmul_s16(vec_col[3], vget_lane_s16(vec_row[3], 3));
+	vec_ans[3] = vadd_s16(vec_ans[3], temp);
+	temp = vmul_s16(vec_col[4], vget_lane_s16(vec_row[3], 4));
+	vec_ans[3] = vadd_s16(vec_ans[3], temp);
+	temp = vmul_s16(vec_col[5], vget_lane_s16(vec_row[3], 5));
+	vec_ans[3] = vadd_s16(vec_ans[3], temp);
+	temp = vmul_s16(vec_col[6], vget_lane_s16(vec_row[3], 6));
+	vec_ans[3] = vadd_s16(vec_ans[3], temp);
+	temp = vmul_s16(vec_col[7], vget_lane_s16(vec_row[3], 7));
+	vec_ans[3] = vadd_s16(vec_ans[3], temp);
+
+	temp = vmul_s16(vec_col[0], vget_lane_s16(vec_row[4], 0));
+	vec_ans[4] = vadd_s16(vec_ans[4], temp);
+	temp = vmul_s16(vec_col[1], vget_lane_s16(vec_row[4], 1));
+	vec_ans[4] = vadd_s16(vec_ans[4], temp);
+	temp = vmul_s16(vec_col[2], vget_lane_s16(vec_row[4], 2));
+	vec_ans[4] = vadd_s16(vec_ans[4], temp);
+	temp = vmul_s16(vec_col[3], vget_lane_s16(vec_row[4], 3));
+	vec_ans[4] = vadd_s16(vec_ans[4], temp);
+	temp = vmul_s16(vec_col[4], vget_lane_s16(vec_row[4], 4));
+	vec_ans[4] = vadd_s16(vec_ans[4], temp);
+	temp = vmul_s16(vec_col[5], vget_lane_s16(vec_row[4], 5));
+	vec_ans[4] = vadd_s16(vec_ans[4], temp);
+	temp = vmul_s16(vec_col[6], vget_lane_s16(vec_row[4], 6));
+	vec_ans[4] = vadd_s16(vec_ans[4], temp);
+	temp = vmul_s16(vec_col[7], vget_lane_s16(vec_row[4], 7));
+	vec_ans[4] = vadd_s16(vec_ans[4], temp);
+
+	temp = vmul_s16(vec_col[0], vget_lane_s16(vec_row[5], 0));
+	vec_ans[5] = vadd_s16(vec_ans[5], temp);
+	temp = vmul_s16(vec_col[1], vget_lane_s16(vec_row[5], 1));
+	vec_ans[5] = vadd_s16(vec_ans[5], temp);
+	temp = vmul_s16(vec_col[2], vget_lane_s16(vec_row[5], 2));
+	vec_ans[5] = vadd_s16(vec_ans[5], temp);
+	temp = vmul_s16(vec_col[3], vget_lane_s16(vec_row[5], 3));
+	vec_ans[5] = vadd_s16(vec_ans[5], temp);
+	temp = vmul_s16(vec_col[4], vget_lane_s16(vec_row[5], 4));
+	vec_ans[5] = vadd_s16(vec_ans[5], temp);
+	temp = vmul_s16(vec_col[5], vget_lane_s16(vec_row[5], 5));
+	vec_ans[5] = vadd_s16(vec_ans[5], temp);
+	temp = vmul_s16(vec_col[6], vget_lane_s16(vec_row[5], 6));
+	vec_ans[5] = vadd_s16(vec_ans[5], temp);
+	temp = vmul_s16(vec_col[7], vget_lane_s16(vec_row[5], 7));
+	vec_ans[5] = vadd_s16(vec_ans[5], temp);
+
+	temp = vmul_s16(vec_col[0], vget_lane_s16(vec_row[6], 0));
+	vec_ans[6] = vadd_s16(vec_ans[6], temp);
+	temp = vmul_s16(vec_col[1], vget_lane_s16(vec_row[6], 1));
+	vec_ans[6] = vadd_s16(vec_ans[6], temp);
+	temp = vmul_s16(vec_col[2], vget_lane_s16(vec_row[6], 2));
+	vec_ans[6] = vadd_s16(vec_ans[6], temp);
+	temp = vmul_s16(vec_col[3], vget_lane_s16(vec_row[6], 3));
+	vec_ans[6] = vadd_s16(vec_ans[6], temp);
+	temp = vmul_s16(vec_col[4], vget_lane_s16(vec_row[6], 4));
+	vec_ans[6] = vadd_s16(vec_ans[6], temp);
+	temp = vmul_s16(vec_col[5], vget_lane_s16(vec_row[6], 5));
+	vec_ans[6] = vadd_s16(vec_ans[6], temp);
+	temp = vmul_s16(vec_col[6], vget_lane_s16(vec_row[6], 6));
+	vec_ans[6] = vadd_s16(vec_ans[6], temp);
+	temp = vmul_s16(vec_col[7], vget_lane_s16(vec_row[6], 7));
+	vec_ans[6] = vadd_s16(vec_ans[6], temp);
+
+	temp = vmul_s16(vec_col[0], vget_lane_s16(vec_row[7], 0));
+	vec_ans[7] = vadd_s16(vec_ans[7], temp);
+	temp = vmul_s16(vec_col[1], vget_lane_s16(vec_row[7], 1));
+	vec_ans[7] = vadd_s16(vec_ans[7], temp);
+	temp = vmul_s16(vec_col[2], vget_lane_s16(vec_row[7], 2));
+	vec_ans[7] = vadd_s16(vec_ans[7], temp);
+	temp = vmul_s16(vec_col[3], vget_lane_s16(vec_row[7], 3));
+	vec_ans[7] = vadd_s16(vec_ans[7], temp);
+	temp = vmul_s16(vec_col[4], vget_lane_s16(vec_row[7], 4));
+	vec_ans[7] = vadd_s16(vec_ans[7], temp);
+	temp = vmul_s16(vec_col[5], vget_lane_s16(vec_row[7], 5));
+	vec_ans[7] = vadd_s16(vec_ans[7], temp);
+	temp = vmul_s16(vec_col[6], vget_lane_s16(vec_row[7], 6));
+	vec_ans[7] = vadd_s16(vec_ans[7], temp);
+	temp = vmul_s16(vec_col[7], vget_lane_s16(vec_row[7], 7));
+	vec_ans[7] = vadd_s16(vec_ans[7], temp);
+	
+
+   
+	vst1_s16(ans_neon, ans[0]);
+	vst1_s16(ans_neon + 8, ans[1]);
+	vst1_s16(ans_neon + 16, ans[2]);
+	vst1_s16(ans_neon + 24, ans[3]);
+	vst1_s16(ans_neon + 32, ans[4]);
+	vst1_s16(ans_neon + 40, ans[5]);
+	vst1_s16(ans_neon + 48, ans[6]);
+	vst1_s16(ans_neon + 56, ans[7]);
+	
+	p1 = clock();	
+/*
 
     int16x8_t arr1_0 = vld1q_s16(arr1);       // 1st row of arr1
     int16x8_t arr1_1 = vld1q_s16(arr1 + 8);   // 2nd row of arr1
@@ -213,7 +376,7 @@ void func() {
     p1 = clock();
     // Matrix multiplication ends
 
-
+*/
 	/*
 	int16x8_t vec_row[8];
 	int16x8_t vec_col[8];
