@@ -209,19 +209,19 @@ void func() {
 
     ans_7=vmul_s16(arr1_7,arr2_0); //Dot product of 4th row of arr1, 1th column of arr2
 	ans_neon[56]=ans_7[0]+ans_7[1]+ans_7[2]+ans_7[3]+ans_7[4]+ans_7[5]+ans_7[6]+ans_7[7];
-	ans_7=vmul_s16(arr1_4,arr2_1); //Dot product of 4th row of arr1, 2th column of arr2
+	ans_7=vmul_s16(arr1_7,arr2_1); //Dot product of 4th row of arr1, 2th column of arr2
 	ans_neon[57]=ans_7[0]+ans_7[1]+ans_7[2]+ans_7[3]+ans_7[4]+ans_7[5]+ans_7[6]+ans_7[7];
-	ans_7=vmul_s16(arr1_4,arr2_2); //Dot product of 4th row of arr1, 3th column of arr2
+	ans_7=vmul_s16(arr1_7,arr2_2); //Dot product of 4th row of arr1, 3th column of arr2
 	ans_neon[58]=ans_7[0]+ans_7[1]+ans_7[2]+ans_7[3]+ans_7[4]+ans_7[5]+ans_7[6]+ans_7[7];
-	ans_7=vmul_s16(arr1_4,arr2_3); //Dot product of 4th row of arr1, 4th column of arr2
+	ans_7=vmul_s16(arr1_7,arr2_3); //Dot product of 4th row of arr1, 4th column of arr2
 	ans_neon[59]=ans_7[0]+ans_7[1]+ans_7[2]+ans_7[3]+ans_7[4]+ans_7[5]+ans_7[6]+ans_7[7];
-    ans_7=vmul_s16(arr1_4,arr2_4); //Dot product of 4th row of arr1, 1th column of arr2
+    ans_7=vmul_s16(arr1_7,arr2_4); //Dot product of 4th row of arr1, 1th column of arr2
 	ans_neon[60]=ans_7[0]+ans_7[1]+ans_7[2]+ans_7[3]+ans_7[4]+ans_7[5]+ans_7[6]+ans_7[7];
-	ans_7=vmul_s16(arr1_4,arr2_5); //Dot product of 4th row of arr1, 2th column of arr2
+	ans_7=vmul_s16(arr1_7,arr2_5); //Dot product of 4th row of arr1, 2th column of arr2
 	ans_neon[61]=ans_7[0]+ans_7[1]+ans_7[2]+ans_7[3]+ans_7[4]+ans_7[5]+ans_7[6]+ans_7[7];
-	ans_7=vmul_s16(arr1_4,arr2_6); //Dot product of 4th row of arr1, 3th column of arr2
+	ans_7=vmul_s16(arr1_7,arr2_6); //Dot product of 4th row of arr1, 3th column of arr2
 	ans_neon[62]=ans_7[0]+ans_7[1]+ans_7[2]+ans_7[3]+ans_7[4]+ans_7[5]+ans_7[6]+ans_7[7];
-	ans_7=vmul_s16(arr1_4,arr2_7); //Dot product of 4th row of arr1, 4th column of arr2
+	ans_7=vmul_s16(arr1_7,arr2_7); //Dot product of 4th row of arr1, 4th column of arr2
 	ans_neon[63]=ans_7[0]+ans_7[1]+ans_7[2]+ans_7[3]+ans_7[4]+ans_7[5]+ans_7[6]+ans_7[7];
     
 	p1 = clock();
