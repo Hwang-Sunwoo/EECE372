@@ -69,29 +69,29 @@ void func() {
         int16x8_t B_col = vld1q_s16(&arr2[i * 8]);
 
         // Multiply and accumulate
-        C_row0 = vmlal_laneq_s16(C_row0, vget_low_s16(A_row0), B_col, i);
-        C_row0 = vmlal_laneq_s16(C_row0, vget_high_s16(A_row0), B_col, i);
+        C_row0 = vmlal_s16(C_row0, vget_low_s16(A_row0), B_col, i);
+        C_row0 = vmlal_s16(C_row0, vget_high_s16(A_row0), B_col, i);
         
-        C_row1 = vmlal_laneq_s16(C_row1, vget_low_s16(A_row1), B_col, i);
-        C_row1 = vmlal_laneq_s16(C_row1, vget_high_s16(A_row1), B_col, i);
+        C_row1 = vmlal_s16(C_row1, vget_low_s16(A_row1), B_col, i);
+        C_row1 = vmlal_s16(C_row1, vget_high_s16(A_row1), B_col, i);
         
-        C_row2 = vmlal_laneq_s16(C_row2, vget_low_s16(A_row2), B_col, i);
-        C_row2 = vmlal_laneq_s16(C_row2, vget_high_s16(A_row2), B_col, i);
+        C_row2 = vmlal_s16(C_row2, vget_low_s16(A_row2), B_col, i);
+        C_row2 = vmlal_s16(C_row2, vget_high_s16(A_row2), B_col, i);
         
-        C_row3 = vmlal_laneq_s16(C_row3, vget_low_s16(A_row3), B_col, i);
-        C_row3 = vmlal_laneq_s16(C_row3, vget_high_s16(A_row3), B_col, i);
+        C_row3 = vmlal_s16(C_row3, vget_low_s16(A_row3), B_col, i);
+        C_row3 = vmlal_s16(C_row3, vget_high_s16(A_row3), B_col, i);
         
-        C_row4 = vmlal_laneq_s16(C_row4, vget_low_s16(A_row4), B_col, i);
-        C_row4 = vmlal_laneq_s16(C_row4, vget_high_s16(A_row4), B_col, i);
+        C_row4 = vmlal_s16(C_row4, vget_low_s16(A_row4), B_col, i);
+        C_row4 = vmlal_s16(C_row4, vget_high_s16(A_row4), B_col, i);
         
-        C_row5 = vmlal_laneq_s16(C_row5, vget_low_s16(A_row5), B_col, i);
-        C_row5 = vmlal_laneq_s16(C_row5, vget_high_s16(A_row5), B_col, i);
+        C_row5 = vmlal_s16(C_row5, vget_low_s16(A_row5), B_col, i);
+        C_row5 = vmlal_s16(C_row5, vget_high_s16(A_row5), B_col, i);
         
-        C_row6 = vmlal_laneq_s16(C_row6, vget_low_s16(A_row6), B_col, i);
-        C_row6 = vmlal_laneq_s16(C_row6, vget_high_s16(A_row6), B_col, i);
+        C_row6 = vmlal_s16(C_row6, vget_low_s16(A_row6), B_col, i);
+        C_row6 = vmlal_s16(C_row6, vget_high_s16(A_row6), B_col, i);
         
-        C_row7 = vmlal_laneq_s16(C_row7, vget_low_s16(A_row7), B_col, i);
-        C_row7 = vmlal_laneq_s16(C_row7, vget_high_s16(A_row7), B_col, i);
+        C_row7 = vmlal_s16(C_row7, vget_low_s16(A_row7), B_col, i);
+        C_row7 = vmlal_s16(C_row7, vget_high_s16(A_row7), B_col, i);
     }
 
     // Store results
