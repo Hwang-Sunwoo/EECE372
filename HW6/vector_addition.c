@@ -76,9 +76,32 @@ void vec_slicing(double *x, double *y, double *z) {
     {
         int thread_id = omp_get_thread_num();
         int num_threads = omp_get_num_threads();
-        for (int i = thread_id; i < ARRAY_SIZE; i += num_threads) {
-            z[i] = x[i] + y[i];
-        }
+        switch(thread_id){
+        case 0:
+			for (int i = 0; i < ARRAY_SIZE; i +=  num_threads)
+				z[i] = x[i] + y[i];
+			break;
+		case 1:
+			for (int i = 1; i < ARRAY_SIZE; i +=  num_threads)
+				z[i] = x[i] + y[i];
+			break;
+		case 2:
+			for (int i = 2; i < ARRAY_SIZE; i +=  num_threads)
+				z[i] = x[i] + y[i];
+			break;
+		case 3:
+			for (int i = 3; i < ARRAY_SIZE; i +=  num_threads)
+				z[i] = x[i] + y[i];
+			break;
+		case 4:
+			for (int i = 4; i < ARRAY_SIZE; i +=  num_threads)
+				z[i] = x[i] + y[i];
+			break;
+		case 5:
+			for (int i = 5; i < ARRAY_SIZE; i +=  num_threads)
+				z[i] = x[i] + y[i];
+			break;
+		}
     }
 }
 
