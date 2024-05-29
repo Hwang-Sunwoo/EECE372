@@ -49,9 +49,9 @@ void func() {
 	int16x8_t vec_ans[8];
 
 	for(int i = 0; i < 8; i++){
-	    vec_row[i] = vld1_s16(arr1 + (i * 8));
-	    vec_col[i] = vld1_s16(arr2 + (i * 8));
-	    vec_ans[i] = vdup_n_s16(0);
+	    vec_row[i] = vld1q_s16(arr1 + (i * 8));
+	    vec_col[i] = vld1q_s16(arr2 + (i * 8));
+	    vec_ans[i] = vdupq_n_s16(0);
 	}
 
 	int16x8_t temp;
@@ -196,14 +196,14 @@ void func() {
 	
 
    
-	vst1_s16(ans_neon, ans[0]);
-	vst1_s16(ans_neon + 8, ans[1]);
-	vst1_s16(ans_neon + 16, ans[2]);
-	vst1_s16(ans_neon + 24, ans[3]);
-	vst1_s16(ans_neon + 32, ans[4]);
-	vst1_s16(ans_neon + 40, ans[5]);
-	vst1_s16(ans_neon + 48, ans[6]);
-	vst1_s16(ans_neon + 56, ans[7]);
+	vst1_s16(ans_neon, vec_ans[0]);
+	vst1_s16(ans_neon + 8, vec_ans[1]);
+	vst1_s16(ans_neon + 16, vec_ans[2]);
+	vst1_s16(ans_neon + 24, vec_ans[3]);
+	vst1_s16(ans_neon + 32, vec_ans[4]);
+	vst1_s16(ans_neon + 40, vec_ans[5]);
+	vst1_s16(ans_neon + 48, vec_ans[6]);
+	vst1_s16(ans_neon + 56, vec_ans[7]);
 	
 	p1 = clock();	
 /*
