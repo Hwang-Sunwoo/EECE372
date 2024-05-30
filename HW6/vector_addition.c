@@ -18,29 +18,43 @@ int main() {
     double *z = malloc(sizeof(double) * ARRAY_SIZE);
 
     clock_t start, end;
+    float time1, time2, time3;
 
-    srand((unsigned)time(NULL));
-    for (int i = 0; i < ARRAY_SIZE; i++) {
-        z[i] = 0;
-        x[i] = rand() % 10 + 1;
-        y[i] = rand() % 10 + 1;
+   
+
+    for(int i = 0; i < 30; i++)
+    {
+        srand((unsigned)time(NULL));
+        for (int i = 0; i < ARRAY_SIZE; i++) {
+            z[i] = 0;
+            x[i] = rand() % 10 + 1;
+            y[i] = rand() % 10 + 1;
+        }
+        start = clock();
+        vec_simple(x, y, z);
+        time1 += ((double)clock() - start) / ((double)CLOCKS_PER_SEC / 1000);
+
+        start = clock();
+        vec_slicing(x, y, z);
+        time2 += ((double)clock() - start) / ((double)CLOCKS_PER_SEC / 1000);
+
+        start = clock();
+        vec_chunking(x, y, z);
+        time3 += ((double)clock() - start) / ((double)CLOCKS_PER_SEC / 1000);
     }
 
-    start = clock();
-    vec_simple(x, y, z);
-    printf("Execution time (simple)  : %7.3lf[ms]\n", ((double)clock() - start) / ((double)CLOCKS_PER_SEC / 1000));
+    time1 = time1/30;
+    time2 = time2/30;  
+    time3 = time3/30;  
 
-    start = clock();
-    vec_slicing(x, y, z);
-    printf("Execution time (slicing) : %7.3lf[ms]\n", ((double)clock() - start) / ((double)CLOCKS_PER_SEC / 1000));
+    printf("Execution average time (simple)  : %7.3lf[ms]\n", time1);
+    printf("Execution average time (slicing) : %7.3lf[ms]\n", time2);
+    printf("Execution average time (chunking) : %7.3lf[ms]\n", time3);
 
     for (int i = 0; i < ARRAY_SIZE; i++) {
         error1 = error1 + (z[i] - (x[i] + y[i]));
     }
 
-    start = clock();
-    vec_chunking(x, y, z);
-    printf("Execution time (chunking): %7.3lf[ms]\n", ((double)clock() - start) / ((double)CLOCKS_PER_SEC / 1000));
 
     for (int i = 0; i < ARRAY_SIZE; i++) {
         error2 = error2 + (z[i] - (x[i] + y[i]));
@@ -52,12 +66,13 @@ int main() {
     else {
         printf("FAIL\n");
     }
-
+	
     free(x);
     free(y);
     free(z);
     return 0;
 }
+
 
 void vec_simple(double *x, double *y, double *z) {
     omp_set_num_threads(6);
