@@ -196,7 +196,19 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     /*          PUT YOUR CODE HERE          */
     // Padding input : float *feature_in
     // Padding output: float *feature_out
-
+    int padded_H = H + 2;
+    int padded_W = W + 2;
+    for (int c = 0; c < C; c++) {
+        for (int h = 0; h < padded_H; h++) {
+            for (int w = 0; w < padded_W; w++) {
+                if (h == 0 || h == padded_H - 1 || w == 0 || w == padded_W - 1) {
+                    feature_out[c * padded_H * padded_W + h * padded_W + w] = 0;
+                } else {
+                    feature_out[c * padded_H * padded_W + h * padded_W + w] = feature_in[c * H * W + (h - 1) * W + (w - 1)];
+                }
+            }
+        }
+    }
     return;
 }
 
@@ -204,7 +216,23 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     /*          PUT YOUR CODE HERE          */
     // Conv_2d input : float *feature_in
     // Conv_2d output: float *feature_out
-
+    for (int oc = 0; oc < out_C; oc++) {
+        for (int oh = 0; oh < out_H; oh++) {
+            for (int ow = 0; ow < out_W; ow++) {
+                float sum = bias[oc];
+                for (int ic = 0; ic < in_C; ic++) {
+                    for (int kh = 0; kh < K; kh++) {
+                        for (int kw = 0; kw < K; kw++) {
+                            int ih = oh * S + kh;
+                            int iw = ow * S + kw;
+                            sum += feature_in[ic * in_H * in_W + ih * in_W + iw] * weight[oc * in_C * K * K + ic * K * K + kh * K + kw];
+                        }
+                    }
+                }
+                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum;
+            }
+        }
+    }
     return;
 }
 
@@ -212,7 +240,11 @@ void ReLU(float *feature_in, int elem_num){
     /*          PUT YOUR CODE HERE          */
     // ReLU input : float *feature_in
     // ReLU output: float *feature_in
-
+    for (int i = 0; i < elem_num; i++) {
+        if (feature_in[i] < 0) {
+            feature_in[i] = 0;
+        }
+    }
     return;
 }
 
@@ -220,7 +252,13 @@ void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Linear input : float *feature_in
     // Linear output: float *feature_out
-
+    for (int out = 0; out < FC_OUT; out++) {
+        float sum = bias[out];
+        for (int in = 0; in < FC_IN; in++) {
+            sum += feature_in[in] * weight[out * FC_IN + in];
+        }
+        feature_out[out] = sum;
+    }
     return;
 }
 
@@ -253,7 +291,13 @@ int Get_pred(float *activation) {
     // Get_pred output: int pred
 
     int pred = 0;
-
+    float max_val = activation[0];
+    for (int i = 1; i < CLASS; i++) {
+        if (activation[i] > max_val) {
+            max_val = activation[i];
+            pred = i;
+        }
+    }
     return pred;
 }
 
@@ -261,7 +305,11 @@ void Get_CAM(float *activation, float *cam, int pred, float *weight) {
     /*          PUT YOUR CODE HERE          */
     // Get_CAM input : float *activation
     // Get_CAM output: float *cam
-
+    for (int h = 0; h < I3_H; h++) {
+        for (int w = 0; w < I3_W; w++) {
+            cam[h * I3_W + w] = activation[h * I3_W + w] * weight[pred * FC_IN + h * I3_W + w];
+        }
+    }
     return;
 }
 
