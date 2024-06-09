@@ -46,6 +46,15 @@
 #define FC_IN (I2_H * I2_W)
 #define FC_OUT CLASS
 
+#define Pin_A 0
+#define Pin_B 1
+#define Pin_C 2
+#define Pin_D 3
+#define Pin_E 4
+#define Pin_F 5
+#define Pin_G 6
+#define Pin_DP 7 
+
 typedef struct _model {
     float conv1_weight[I2_C * I1_C * CONV1_KERNAL * CONV1_KERNAL];
     float conv1_bias[I2_C];
@@ -197,16 +206,15 @@ int main(int argc, char *argv[]) {
     if (wiringPiSetup() == -1){
 		return 1;
 	}
-	const int A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, DP = 7;  // Define GPIO pins for 7-segment display
 
-	pinMode(A, OUTPUT);
-	pinMode(B, OUTPUT);
-	pinMode(C, OUTPUT);
-	pinMode(D, OUTPUT);
-	pinMode(E, OUTPUT);
-	pinMode(F, OUTPUT);
-	pinMode(G, OUTPUT);
-	pinMode(DP, OUTPUT);
+	pinMode(Pin_A, OUTPUT);
+	pinMode(Pin_B, OUTPUT);
+	pinMode(Pin_C, OUTPUT);
+	pinMode(Pin_D, OUTPUT);
+	pinMode(Pin_E, OUTPUT);
+	pinMode(Pin_F, OUTPUT);
+	pinMode(Pin_G, OUTPUT);
+	pinMode(Pin_DP, OUTPUT);
 
     display_sev_seg(pred);
     
@@ -430,104 +438,104 @@ void display_sev_seg(int pred){
 
     switch(pred){
 			case 0:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 0);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 1);
+				digitalWrite(Pin_B, 1);
+				digitalWrite(Pin_C, 1);
+				digitalWrite(Pin_D, 1);
+				digitalWrite(Pin_E, 1);
+				digitalWrite(Pin_F, 1);
+				digitalWrite(Pin_G, 0);
+				digitalWrite(Pin_DP, 0);
 				break;
 			case 1:
-				digitalWrite(A, 0);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 0);
-				digitalWrite(E, 0);
-				digitalWrite(F, 0);
-				digitalWrite(G, 0);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 0);
+				digitalWrite(Pin_B, 1);
+				digitalWrite(Pin_C, 1);
+				digitalWrite(Pin_D, 0);
+				digitalWrite(Pin_E, 0);
+				digitalWrite(Pin_F, 0);
+				digitalWrite(Pin_G, 0);
+				digitalWrite(Pin_DP, 0);
 				break;
 			case 2:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 0);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 0);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 1);
+				digitalWrite(Pin_B, 1);
+				digitalWrite(Pin_C, 0);
+				digitalWrite(Pin_D, 1);
+				digitalWrite(Pin_E, 1);
+				digitalWrite(Pin_F, 0);
+				digitalWrite(Pin_G, 1);
+				digitalWrite(Pin_DP, 0);
 				break;
 			case 3:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 0);
-				digitalWrite(F, 0);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 1);
+				digitalWrite(Pin_B, 1);
+				digitalWrite(Pin_C, 1);
+				digitalWrite(Pin_D, 1);
+				digitalWrite(Pin_E, 0);
+				digitalWrite(Pin_F, 0);
+				digitalWrite(Pin_G, 1);
+				digitalWrite(Pin_DP, 0);
 				break;
 			case 4:
-				digitalWrite(A, 0);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 0);
-				digitalWrite(E, 0);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 0);
+				digitalWrite(Pin_B, 1);
+				digitalWrite(Pin_C, 1);
+				digitalWrite(Pin_D, 0);
+				digitalWrite(Pin_E, 0);
+				digitalWrite(Pin_F, 1);
+				digitalWrite(Pin_G, 1);
+				digitalWrite(Pin_DP, 0);
 				break;
 			case 5:
-				digitalWrite(A, 1);
-				digitalWrite(B, 0);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 0);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 1);
+				digitalWrite(Pin_B, 0);
+				digitalWrite(Pin_C, 1);
+				digitalWrite(Pin_D, 1);
+				digitalWrite(Pin_E, 0);
+				digitalWrite(Pin_F, 1);
+				digitalWrite(Pin_G, 1);
+				digitalWrite(Pin_DP, 0);
 				break;
 			case 6:
-				digitalWrite(A, 1);
-				digitalWrite(B, 0);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 1);
+				digitalWrite(Pin_B, 0);
+				digitalWrite(Pin_C, 1);
+				digitalWrite(Pin_D, 1);
+				digitalWrite(Pin_E, 1);
+				digitalWrite(Pin_F, 1);
+				digitalWrite(Pin_G, 1);
+				digitalWrite(Pin_DP, 0);
 				break;
 			case 7:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 0);
-				digitalWrite(E, 0);
-				digitalWrite(F, 1);
-				digitalWrite(G, 0);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 1);
+				digitalWrite(Pin_B, 1);
+				digitalWrite(Pin_C, 1);
+				digitalWrite(Pin_D, 0);
+				digitalWrite(Pin_E, 0);
+				digitalWrite(Pin_F, 1);
+				digitalWrite(Pin_G, 0);
+				digitalWrite(Pin_DP, 0);
 				break;
 			case 8:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 1);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 1);
+				digitalWrite(Pin_B, 1);
+				digitalWrite(Pin_C, 1);
+				digitalWrite(Pin_D, 1);
+				digitalWrite(Pin_E, 1);
+				digitalWrite(Pin_F, 1);
+				digitalWrite(Pin_G, 1);
+				digitalWrite(Pin_DP, 0);
 				break;
 			case 9:
-				digitalWrite(A, 1);
-				digitalWrite(B, 1);
-				digitalWrite(C, 1);
-				digitalWrite(D, 1);
-				digitalWrite(E, 0);
-				digitalWrite(F, 1);
-				digitalWrite(G, 1);
-				digitalWrite(DP, 0);
+				digitalWrite(Pin_A, 1);
+				digitalWrite(Pin_B, 1);
+				digitalWrite(Pin_C, 1);
+				digitalWrite(Pin_D, 1);
+				digitalWrite(Pin_E, 0);
+				digitalWrite(Pin_F, 1);
+				digitalWrite(Pin_G, 1);
+				digitalWrite(Pin_DP, 0);
 				break;
     }
 }
