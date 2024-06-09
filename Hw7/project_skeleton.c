@@ -14,15 +14,6 @@
 #include <errno.h>
 #include <wiringPi.h>
 
-#define A 0
-#define B 1
-#define C 2
-#define D 3
-#define E 4
-#define F 5
-#define G 6
-#define DP 7
-
 
 #include "stb_image.h"
 #include "stb_image_resize2.h"
@@ -206,6 +197,8 @@ int main(int argc, char *argv[]) {
     if (wiringPiSetup() == -1){
 		return 1;
 	}
+	const int A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, DP = 7;  // Define GPIO pins for 7-segment display
+
 	pinMode(A, OUTPUT);
 	pinMode(B, OUTPUT);
 	pinMode(C, OUTPUT);
