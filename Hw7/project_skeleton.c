@@ -7,6 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <errno.h>
+
 
 #include "stb_image.h"
 #include "stb_image_resize2.h"
@@ -61,6 +67,7 @@ void Log_softmax(float *activation);
 int Get_pred(float *activation);
 void Get_CAM(float *activation, float *cam, int pred, float *weight);
 void save_image(float *feature_scaled, float *cam);
+void display_sev_seg(int pred);
 
 int main(int argc, char *argv[]) {
     clock_t start1, end1, start2, end2;
@@ -74,8 +81,56 @@ int main(int argc, char *argv[]) {
     if (atoi(argv[1]) == 0) {
         /*          PUT YOUR CODE HERE                      */
         /*          Serial communication                    */
-        system("libcamera-still -e bmp --width 280 --height 280 -t 20000 -o image.bmp");
-        file = "image.bmp";
+        int fd;
+        struct termios newtio;
+        char fbuf[1024];
+        char buf[256];
+
+        fd = open("/dev/serial0", O_RDWR | O_NOCTTY);
+        if (fd < 0) {
+            fprintf(stderr, "failed to open port: %s.\r\n", strerror(errno));
+            printf("Make sure you are executing in sudo.\r\n");
+            exit(1);
+        }
+        usleep(250000);
+
+        memset(&newtio, 0, sizeof(newtio));
+        newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+        newtio.c_iflag = ICRNL;
+        newtio.c_oflag = 0;
+        newtio.c_lflag = 0;
+        newtio.c_cc[VTIME] = 0;
+        newtio.c_cc[VMIN] = 1;
+
+        tcflush(fd, TCIFLUSH);
+        tcsetattr(fd, TCSANOW, &newtio);
+
+        while(1){
+        // Read from serial until 'c' or 'C' is received
+        int cnt = read(fd, buf, sizeof(buf));
+        buf[cnt] = '\0';
+
+            if (buf[0] == 'c' || buf[0] == 'C') {
+                system("libcamera-still -e bmp --width 280 --height 280 -t 20000 -o image.bmp");
+                file = "image.bmp";
+                /*
+                // Send the captured image via serial
+                FILE *fp = fopen("image.bmp", "rb");
+                if (fp == NULL) {
+                    fprintf(stderr, "failed to open image file: %s.\r\n", strerror(errno));
+                    exit(1);
+                }
+
+                while (!feof(fp)) {
+                    size_t bytesRead = fread(fbuf, sizeof(char), sizeof(fbuf), fp);
+                    write(fd, fbuf, bytesRead);
+                }
+                fclose(fp);
+                */
+                break;
+            } 
+        }
+        close(fd);
     }
     else if (atoi(argv[1]) == 1) {
         file = "example_1.bmp";
@@ -136,7 +191,21 @@ int main(int argc, char *argv[]) {
 
     /*          PUT YOUR CODE HERE                      */
     /*          7-segment                               */
+    
+    if (wiringPiSetup() == -1){
+		return 1;
+	}
+	pinMode(A, OUTPUT);
+	pinMode(B, OUTPUT);
+	pinMode(C, OUTPUT);
+	pinMode(D, OUTPUT);
+	pinMode(E, OUTPUT);
+	pinMode(F, OUTPUT);
+	pinMode(G, OUTPUT);
+	pinMode(DP, OUTPUT);
 
+    display_sev_seg(pred);
+    
     printf("Log softmax value\n");
     for (int i = 0; i < CLASS; i++) {
         printf("%2d: %6.3f\n", i, fc_out[i]);
@@ -352,4 +421,109 @@ void save_image(float *feature_scaled, float *cam) {
     free(output);
     free(output_bmp);
     return;
+}
+void display_sev_seg(int pred){
+
+    switch(pred){
+			case 0:
+				digitalWrite(A, 1);
+				digitalWrite(B, 1);
+				digitalWrite(C, 1);
+				digitalWrite(D, 1);
+				digitalWrite(E, 1);
+				digitalWrite(F, 1);
+				digitalWrite(G, 0);
+				digitalWrite(DP, 0);
+				break;
+			case 1:
+				digitalWrite(A, 0);
+				digitalWrite(B, 1);
+				digitalWrite(C, 1);
+				digitalWrite(D, 0);
+				digitalWrite(E, 0);
+				digitalWrite(F, 0);
+				digitalWrite(G, 0);
+				digitalWrite(DP, 0);
+				break;
+			case 2:
+				digitalWrite(A, 1);
+				digitalWrite(B, 1);
+				digitalWrite(C, 0);
+				digitalWrite(D, 1);
+				digitalWrite(E, 1);
+				digitalWrite(F, 0);
+				digitalWrite(G, 1);
+				digitalWrite(DP, 0);
+				break;
+			case 3:
+				digitalWrite(A, 1);
+				digitalWrite(B, 1);
+				digitalWrite(C, 1);
+				digitalWrite(D, 1);
+				digitalWrite(E, 0);
+				digitalWrite(F, 0);
+				digitalWrite(G, 1);
+				digitalWrite(DP, 0);
+				break;
+			case 4:
+				digitalWrite(A, 0);
+				digitalWrite(B, 1);
+				digitalWrite(C, 1);
+				digitalWrite(D, 0);
+				digitalWrite(E, 0);
+				digitalWrite(F, 1);
+				digitalWrite(G, 1);
+				digitalWrite(DP, 0);
+				break;
+			case 5:
+				digitalWrite(A, 1);
+				digitalWrite(B, 0);
+				digitalWrite(C, 1);
+				digitalWrite(D, 1);
+				digitalWrite(E, 0);
+				digitalWrite(F, 1);
+				digitalWrite(G, 1);
+				digitalWrite(DP, 0);
+				break;
+			case 6:
+				digitalWrite(A, 1);
+				digitalWrite(B, 0);
+				digitalWrite(C, 1);
+				digitalWrite(D, 1);
+				digitalWrite(E, 1);
+				digitalWrite(F, 1);
+				digitalWrite(G, 1);
+				digitalWrite(DP, 0);
+				break;
+			case 7:
+				digitalWrite(A, 1);
+				digitalWrite(B, 1);
+				digitalWrite(C, 1);
+				digitalWrite(D, 0);
+				digitalWrite(E, 0);
+				digitalWrite(F, 1);
+				digitalWrite(G, 0);
+				digitalWrite(DP, 0);
+				break;
+			case 8:
+				digitalWrite(A, 1);
+				digitalWrite(B, 1);
+				digitalWrite(C, 1);
+				digitalWrite(D, 1);
+				digitalWrite(E, 1);
+				digitalWrite(F, 1);
+				digitalWrite(G, 1);
+				digitalWrite(DP, 0);
+				break;
+			case 9:
+				digitalWrite(A, 1);
+				digitalWrite(B, 1);
+				digitalWrite(C, 1);
+				digitalWrite(D, 1);
+				digitalWrite(E, 0);
+				digitalWrite(F, 1);
+				digitalWrite(G, 1);
+				digitalWrite(DP, 0);
+				break;
+    }
 }
