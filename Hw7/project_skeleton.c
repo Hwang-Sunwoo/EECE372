@@ -12,12 +12,23 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <wiringPi.h>
+
+#define A 0
+#define B 1
+#define C 2
+#define D 3
+#define E 4
+#define F 5
+#define G 6
+#define DP 7
 
 
 #include "stb_image.h"
 #include "stb_image_resize2.h"
 #include "stb_image_write.h"
 
+#define BAUDRATE B1000000
 #define CLOCKS_PER_US ((double)CLOCKS_PER_SEC / 1000000)
 
 #define CLASS 10
