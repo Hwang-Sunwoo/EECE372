@@ -212,14 +212,9 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	pinMode(Pin_A, OUTPUT);
-	pinMode(Pin_B, OUTPUT);
-	pinMode(Pin_C, OUTPUT);
-	pinMode(Pin_D, OUTPUT);
-	pinMode(Pin_E, OUTPUT);
-	pinMode(Pin_F, OUTPUT);
-	pinMode(Pin_G, OUTPUT);
-	pinMode(Pin_DP, OUTPUT);
+	for(int i = 0; i < 8; i++){
+		pinMode(SEGMENT_PINS[i], OUTPUT);
+   	}
 
     display_sev_seg(pred);
     
