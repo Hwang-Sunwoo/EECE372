@@ -275,7 +275,6 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
     return;
 }
 
-
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     int padded_H = H + 2;
     int padded_W = W + 2;
@@ -290,10 +289,10 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
                         // Calculate address: feature_out + (c * padded_H * padded_W + h * padded_W + w)
                         "mul r0, %[c], %[padded_H]\n\t"
                         "mul r0, r0, %[padded_W]\n\t"
-			"mul r1, %[h], %[padded_W]\n\t"
+                        "mul r1, %[h], %[padded_W]\n\t"
                         "add r0, r0, r1\n\t"
                         "add r0, r0, %[w]\n\t"
-			"lsl r0, ro, #2\n\t"
+                        "lsl r0, r0, #2\n\t"
                         "add r0, %[feature_out], r0\n\t"
 
                         // Set 4 elements to 0
@@ -308,24 +307,24 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
                     asm volatile (
                         "mul r0, %[c], %[H]\n\t"
                         "mul r0, r0, %[W]\n\t"
-			"sub r1, %[h], #1\n\t"
-			"mul r1, r1, %[W]\n\t"
+                        "sub r1, %[h], #1\n\t"
+                        "mul r1, r1, %[W]\n\t"
                         "add r0, r0, r1\n\t"
                         "sub r1, %[w], #1\n\t"
-			"add r1, r1, r0\n\t"
-			"lsl r1, r1, #2\n\t"
+                        "add r1, r1, r0\n\t"
+                        "lsl r1, r1, #2\n\t"
                         "add r1, %[feature_in], r1\n\t"
-			"ldr r1, [r1]"
+                        "ldr r1, [r1]\n\t" // Load input values
 
                         // Calculate address: feature_out + (c * padded_H * padded_W + h * padded_W + w)
                         "mul r0, %[c], %[padded_H]\n\t"
                         "mul r0, r0, %[padded_W]\n\t"
-			"mul r1, %[h], %[padded_W]\n\t"
+                        "mul r1, %[h], %[padded_W]\n\t"
                         "add r0, r0, r1\n\t"
                         "add r0, r0, %[w]\n\t"
-			"lsl r0, ro, #2\n\t"
+                        "lsl r0, r0, #2\n\t"
                         "add r0, %[feature_out], r0\n\t"
-			
+
                         "vst1.32 {q0}, [r0]\n\t" // Store 4 values to feature_out
                         :
                         : [feature_in] "r" (feature_in), [feature_out] "r" (feature_out), [c] "r" (c), [h] "r" (h), [w] "r" (w), [H] "r" (H), [W] "r" (W), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
@@ -336,6 +335,7 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         }
     }
 }
+
 
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
