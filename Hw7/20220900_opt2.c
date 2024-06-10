@@ -274,7 +274,7 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
 
     return;
 }
-
+/*
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     int padded_H = H + 2;
     int padded_W = W + 2;
@@ -335,8 +335,28 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         }
     }
 }
+*/
+void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
+    int padded_H = H + 2;
+    int padded_W = W + 2;
 
-
+    #pragma omp parallel for collapse(3)
+    for (int c = 0; c < C; c++) {
+        for (int h = 0; h < padded_H; h++) {
+            for (int w = 0; w < padded_W; w += 4) {
+                if (h == 0 || h == padded_H - 1 || w == 0 || w >= padded_W - 4) {
+                    // 네온을 사용하여 4개의 요소를 0으로 설정
+                    float32x4_t zero_vec = vdupq_n_f32(0.0);
+                    vst1q_f32(&feature_out[c * padded_H * padded_W + h * padded_W + w], zero_vec);
+                } else {
+                    // feature_in에서 값을 로드하고 feature_out에 저장
+                    float32x4_t input_vec = vld1q_f32(&feature_in[c * H * W + (h - 1) * W + (w - 1)]);
+                    vst1q_f32(&feature_out[c * padded_H * padded_W + h * padded_W + w], input_vec);
+                }
+            }
+        }
+    }
+}
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Conv_2d input : float *feature_in
