@@ -401,6 +401,21 @@ int Get_pred(float *activation) {
     }
 }
 
+void Get_CAM(float *activation, float *cam, int pred, float *weight) {
+    /*          PUT YOUR CODE HERE          */
+    // Get_CAM input : float *activation
+    // Get_CAM output: float *cam
+    #pragma omp parallel for
+    for (int h = 0; h < I3_H; h++) {
+        for (int w = 0; w < I3_W; w += 4) {
+            float32x4_t act_vec = vld1q_f32(&activation[h * I3_W + w]);
+            float32x4_t w_vec = vld1q_f32(&weight[pred * FC_IN + h * I3_W + w]);
+            float32x4_t cam_vec = vmulq_f32(act_vec, w_vec);
+            vst1q_f32(&cam[h * I3_W + w], cam_vec);
+        }
+    }
+}
+
 void save_image(float *feature_scaled, float *cam) {
     /*            DO NOT MODIFIY            */
     float *output = (float *)malloc(sizeof(float) * 3 * I1_H * I1_W);
