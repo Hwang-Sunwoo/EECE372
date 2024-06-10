@@ -13,6 +13,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <wiringPi.h>
+#include <arm_neon.h>
+#include <omp.h>
 
 
 #include "stb_image.h"
