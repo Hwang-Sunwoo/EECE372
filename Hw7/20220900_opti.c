@@ -275,7 +275,7 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
 }
 
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
-    asm volatile(
+    asm(
         "push {r4-r11, lr}\n\t"  // Save callee-saved registers
 
         // Load parameters into registers
@@ -365,7 +365,6 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "memory"
     );
 }
-
 
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
