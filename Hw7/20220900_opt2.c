@@ -392,31 +392,39 @@ void Log_softmax(float *activation) {
 int Get_pred(float *activation) {
     int pred;
     asm volatile (
-        "mov r1, #0\n\t"          // pred = 0
-        "ldr s0, [%[act]]\n\t"   // s0 = activation[0]
-        "mov s1, s0\n\t"         // max_val = s1 = activation[0]
-        "mov r2, #1\n\t"          // i = 1
-        "1:\n\t"
-        "cmp r2, %[class]\n\t"    // Compare i with CLASS
-        "bge 2f\n\t"              // If i >= CLASS, break loop
-        "add r3, %[act], r2, LSL #2\n\t" // r3 = &activation[i]
-        "ldr s2, [r3]\n\t"       // s2 = activation[i]
-        "cmp s2, s1\n\t"         // Compare s2 with s1 (activation[i] with max_val)
-        "mrs APSR_nzcv, fpscr\n\t" // Move FP status to APSR
-        "ble 3f\n\t"              // If activation[i] <= max_val, continue loop
-        "mov s1, s2\n\t"         // max_val = activation[i]
-        "mov r1, r2\n\t"          // pred = i
-        "3:\n\t"
-        "add r2, r2, #1\n\t"      // i++
-        "b 1b\n\t"                // Jump to loop_start
-        "2:\n\t"
-        "mov %[result], r1\n\t"   // result = pred
-        : [result] "=r" (pred)
-        : [act] "r" (activation), [class] "r" (CLASS)
-        : "r1", "r2", "r3", "s0", "s1", "s2", "memory"
+        "mov r1, #0\n\t"                // pred = 0
+        "vldr s0, [%[activation]]\n\t"  // max_val = activation[0]
+
+        "mov r2, #1\n\t"                // i = 1
+        "ldr r3, =CLASS\n\t"            // r3 = CLASS
+
+    "loop_start:\n\t"
+        "cmp r2, r3\n\t"                // if (i >= CLASS) break
+        "bge loop_end\n\t"
+
+        "add r4, %[activation], r2, lsl #2\n\t" // address of activation[i]
+        "vldr s1, [r4]\n\t"                     // load activation[i]
+
+        "vcgt.f32 s2, s1, s0\n\t"       // if (activation[i] > max_val)
+        "vmrs APSR_nzcv, fpscr\n\t"     // move the status flags to APSR
+        "beq continue_loop\n\t"         // if not greater, continue
+
+        "vmov.f32 s0, s1\n\t"           // max_val = activation[i]
+        "mov r1, r2\n\t"                // pred = i
+
+    "continue_loop:\n\t"
+        "add r2, r2, #1\n\t"            // i++
+        "b loop_start\n\t"
+
+    "loop_end:\n\t"
+        "mov %[pred], r1\n\t"           // pred = r1
+        : [pred] "=r" (pred)
+        : [activation] "r" (activation)
+        : "r1", "r2", "r3", "r4", "s0", "s1", "s2", "memory"
     );
     return pred;
 }
+
 
 
 void Get_CAM(float *activation, float *cam, int pred, float *weight) {
