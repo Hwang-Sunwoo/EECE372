@@ -443,120 +443,44 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     );
 }
 
-#include <arm_neon.h>
-
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
-    asm volatile (
-        // Clear all temporary registers
-        "mov r0, #0\n\t"  // oc loop index
-        "mov r1, #0\n\t"  // oh loop index
-        "mov r2, #0\n\t"  // ow loop index
-        "mov r3, #0\n\t"  // ic loop index
-        "mov r4, #0\n\t"  // kh loop index
-        "mov r5, #0\n\t"  // kw loop index
+    for (int oc = 0; oc < out_C; oc++) {
+        for (int oh = 0; oh < out_H; oh++) {
+            for (int ow = 0; ow < out_W; ow++) {
+                float sum = bias[oc];
+                for (int ic = 0; ic < in_C; ic++) {
+                    for (int kh = 0; kh < K; kh++) {
+                        for (int kw = 0; kw < K; kw++) {
+                            int ih = oh * S + kh;
+                            int iw = ow * S + kw;
 
-        // Outer loop for output channels (oc)
-        "oc_loop:\n\t"
-        "cmp r0, %[out_C]\n\t"
-        "bge oc_done\n\t"
-
-        // Inner loop for output height (oh)
-        "oh_loop:\n\t"
-        "cmp r1, %[out_H]\n\t"
-        "bge oh_done\n\t"
-
-        // Inner loop for output width (ow)
-        "ow_loop:\n\t"
-        "cmp r2, %[out_W]\n\t"
-        "bge ow_done\n\t"
-
-        // Initialize sum with bias
-        "ldr q0, [%[bias], r0, lsl #2]\n\t"  // q0 = sum = bias[oc]
-
-        // Loop over input channels (ic)
-        "ic_loop:\n\t"
-        "cmp r3, %[in_C]\n\t"
-        "bge ic_done\n\t"
-
-        // Loop over kernel height (kh)
-        "kh_loop:\n\t"
-        "cmp r4, %[K]\n\t"
-        "bge kh_done\n\t"
-
-        // Loop over kernel width (kw)
-        "kw_loop:\n\t"
-        "cmp r5, %[K]\n\t"
-        "bge kw_done\n\t"
-
-        // Calculate input height and width indices
-        "mul r6, r1, %[S]\n\t"  // r6 = oh * S
-        "add r6, r6, r4\n\t"  // r6 += kh
-        "mul r10, r2, %[S]\n\t"  // r10 = ow * S
-        "add r10, r10, r5\n\t"  // r10 += kw
-
-        // Load input feature value
-        "mul r8, r3, %[in_H]\n\t"
-        "mul r8, r8, %[in_W]\n\t"  // r8 = ic * in_H * in_W
-	"mul r9, r6, %[in_W]\n\t"
-        "add r8, r8, r9\n\t"  // r8 += ih
-        "add r8, r8, r10\n\t"  // r8 += iw
-        "vld1.32 {d0-d1}, [%[feature_in], r8, lsl #2]\n\t"  // d0 = feature_in[ic * in_H * in_W + ih * in_W + iw]
-
-        // Load weight value
-        "mul r9, r0, %[in_C]\n\t"
-        "mul r9, r9, %[K]\n\t"
-        "mul r9, r9, %[K]\n\t"  // r9 = oc * in_C * K * K
-        "mul r8, %[K], r3\n\t"
-        "mul r8, r8, %[K]\n\t"
-        "add r9, r9, r8\n\t"
-        "mul r8, r4, %[K]\n\t"
-	"add r9, r8, r5\n\t"
-        "add r9, r9, r5\n\t"  // r9 += ic * K * K + kh * K + kw
-        "vld1.32 {d2-d3}, [%[weight], r9, lsl #2]\n\t"  // d2 = weight[oc * in_C * K * K + ic * K * K + kh * K + kw]
-
-        // Multiply and accumulate
-        "vmla.f32 q0, q1, q2\n\t"
-
-        "add r5, r5, #1\n\t"  // kw++
-        "b kw_loop\n\t"
-
-        "kw_done:\n\t"
-        "add r4, r4, #1\n\t"  // kh++
-        "b kh_loop\n\t"
-
-        "kh_done:\n\t"
-        "add r3, r3, #1\n\t"  // ic++
-        "b ic_loop\n\t"
-
-        "ic_done:\n\t"
-        // Store the result to output feature map
-        "mul r6, r0, %[out_H]\n\t"
-        "mul r6, r6, %[out_W]\n\t"  // r6 = oc * out_H * out_W
-        "add r6, r6, r1\n\t"
-        "mul r6, r6, %[out_W]\n\t"
-        "add r6, r6, r2\n\t"  // r6 += oh * out_W + ow
-        "lsl r6, r6, #2\n\t"  // r6 *= 4 (sizeof(float))
-        "vst1.32 {q0}, [%[feature_out], r6]\n\t"
-
-        "add r2, r2, #1\n\t"  // ow++
-        "b ow_loop\n\t"
-
-        "ow_done:\n\t"
-        "add r1, r1, #1\n\t"  // oh++
-        "b oh_loop\n\t"
-
-        "oh_done:\n\t"
-        "add r0, r0, #1\n\t"  // oc++
-        "b oc_loop\n\t"
-
-        "oc_done:\n\t"
-        :
-        : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [in_C] "r"(in_C), [in_H] "r"(in_H), [in_W] "r"(in_W), [out_C] "r"(out_C), [out_H] "r"(out_H), [out_W] "r"(out_W), [K] "r"(K), [S] "r"(S), [weight] "r"(weight), [bias] "r"(bias)
-        : "q0", "q1", "q2", "q3", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r8", "r9", "r10", "memory"
-    );
+                            asm volatile (
+                                "mov r0, %[feature_in]\n\t"
+                                "mov r1, %[weight]\n\t"
+                                "add r0, r0, %[ic_offset]\n\t"
+                                "add r0, r0, %[in_offset]\n\t"
+                                "vld1.32 {d0[0]}, [r0]\n\t"     // Load feature_in[ih * in_W + iw]
+                                "add r1, r1, %[oc_offset]\n\t"
+                                "add r1, r1, %[w_offset]\n\t"
+                                "vld1.32 {d1[0]}, [r1]\n\t"     // Load weight[oc * in_C * K * K + ic * K * K + kh * K + kw]
+                                "vmul.f32 d0, d0, d1\n\t"       // Multiply feature_in and weight
+                                "vadd.f32 %[sum], %[sum], d0[0]\n\t" // Add to sum
+                                : [sum] "+w" (sum)
+                                : [feature_in] "r" (feature_in), [weight] "r" (weight), 
+                                  [ic_offset] "r" (ic * in_H * in_W * sizeof(float)), 
+                                  [in_offset] "r" (ih * in_W + iw * sizeof(float)), 
+                                  [oc_offset] "r" (oc * in_C * K * K * sizeof(float)), 
+                                  [w_offset] "r" (ic * K * K + kh * K + kw * sizeof(float))
+                                : "r0", "r1", "d0", "d1", "memory"
+                            );
+                        }
+                    }
+                }
+                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum;
+            }
+        }
+    }
 }
-
-
 
 void ReLU(float *feature_in, int elem_num){
     /*          PUT YOUR CODE HERE          */
