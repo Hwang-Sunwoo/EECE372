@@ -311,7 +311,7 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     for (int oc = 0; oc < out_C; oc++) {
         for (int oh = 0; oh < out_H; oh++) {
             for (int ow = 0; ow < out_W; ow++) {
-                float32x4_t sum_vec = vdupq_n_f32(bias[oc]);
+                float sum = bias[oc];
                 for (int ic = 0; ic < in_C; ic++) {
                     for (int kh = 0; kh < K; kh++) {
                         for (int kw = 0; kw < K; kw++) {
@@ -321,11 +321,12 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                             float *w_ptr = weight + oc * in_C * K * K + ic * K * K + kh * K + kw;
                             float32x4_t in_vec = vld1q_f32(in_ptr);
                             float32x4_t w_vec = vld1q_f32(w_ptr);
-                            sum_vec = vmlaq_f32(sum_vec, in_vec, w_vec);
+                            float32x4_t sum_vec = vmulq_f32(in_vec, w_vec);
+                            sum += vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
                         }
                     }
                 }
-                feature_out[oc * out_H * out_W + oh * out_W + ow] = vaddvq_f32(sum_vec);
+                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum;
             }
         }
     }
@@ -350,13 +351,15 @@ void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     // Linear output: float *feature_out
     #pragma omp parallel for
     for (int out = 0; out < FC_OUT; out++) {
-        float32x4_t sum_vec = vdupq_n_f32(bias[out]);
+        float32x4_t sum_vec = vdupq_n_f32(0.0f);
+        float sum = bias[out];
         for (int in = 0; in < FC_IN; in += 4) {
             float32x4_t in_vec = vld1q_f32(&feature_in[in]);
             float32x4_t w_vec = vld1q_f32(&weight[out * FC_IN + in]);
             sum_vec = vmlaq_f32(sum_vec, in_vec, w_vec);
         }
-        feature_out[out] = vaddvq_f32(sum_vec);
+        sum += vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
+        feature_out[out] = sum;
     }
 }
 
