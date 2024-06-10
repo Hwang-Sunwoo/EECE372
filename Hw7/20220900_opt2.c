@@ -324,20 +324,16 @@ void ReLU(float *feature_in, int elem_num) {
     "cmp r1, #0\n\t"                 // elem_num이 0인지 확인
     "ble ReLU_end\n\t"               // elem_num이 0 이하이면 종료
 
-    "mov r2, #0\n\t"                 // 인덱스 초기화 (0)
+    "mov r2, #0\n\t"                 // 인덱스 초기화 (0) i
 
-    "ReLU_loop:\n\t"                     // 루프 시작
+    "ReLU_loop:\n\t"                 // 루프 시작
     "lsl r4, r2, #2\n\t"            // 현재 요소 주소 계산
     "add r4, r0, r4\n\t"
-    "vldr s0, [r4]\n\t"              // 요소 값 로드
+    "ldr r5, [r4]\n\t"              // 요소 값 로드
 
-    "vmov.f32 s1, #0.0\n\t"         // 0과 비교
-    "vcmp.f32 s0, s1\n\t"
-    "vmrs APSR_nzcv, FPSCR\n\t"     // 비교 결과를 상태 레지스터로 이동
-
+    "cmp r5, #0\n\t"         // 0과 비교
     "bge ReLU_skip\n\t"             // 음수인 경우 건너뜀
-    "vmov.f32 s0, s1\n\t"           // 음수인 경우 0으로 설정
-    "vstr s0, [r4]\n\t"             // 배열에 다시 저장
+    "mov r4, #0\n\t"           // 음수인 경우 0으로 설정
 
     "ReLU_skip:\n\t"
     "add r2, r2, #1\n\t"            // 인덱스 증가
