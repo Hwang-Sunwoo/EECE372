@@ -1,7 +1,8 @@
 CC = gcc
 TARGET = exec
-CFLAGS = -fopenmp -lwiringPi
+CFLAGS = -fopenmp -lwiringPi -mfpu=neon -march=native
 
-$(TARGET) : project_skeleton.c
-	$(CC) -o $(TARGET) project_skeleton.c -lm $(CFLAGS)
+
+$(TARGET) : 20220900_opt.c
+	$(CC) -o $(TARGET) 20220900_opt.c -lm $(CFLAGS)
 
