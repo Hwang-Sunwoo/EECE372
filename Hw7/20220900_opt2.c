@@ -317,17 +317,48 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     }
     return;
 }
-void ReLU(float *feature_in, int elem_num){
-    /*          PUT YOUR CODE HERE          */
-    // ReLU input : float *feature_in
-    // ReLU output: float *feature_in
-    float32x4_t zero = vdupq_n_f32(0.0f);
-    #pragma omp parallel for
-    for (int i = 0; i < elem_num; i += 4) {
-        float32x4_t in_vec = vld1q_f32(&feature_in[i]);
-        float32x4_t result = vmaxq_f32(in_vec, zero);
-        vst1q_f32(&feature_in[i], result);
-    }
+
+void ReLU(float *feature_in, int elem_num) {
+    asm volatile (
+        "stp x29, x30, [sp, #-16]! \n\t"
+        "add x29, sp, #0 \n\t"
+
+        // Initialize NEON registers
+        "eor v0.16b, v0.16b, v0.16b \n\t" // Set v0 to zero vector
+
+        // Compute number of full 4-float vectors
+        "lsr x2, %w1, #2 \n\t"           // x2 = elem_num / 4
+        "and x3, %w1, #3 \n\t"           // x3 = elem_num % 4
+
+        // Loop through full 4-float vectors
+        "cbz x2, 2f \n\t"                // If there are no full vectors, skip
+        "1: \n\t"
+        "ld1 {v1.4s}, [%0], #16 \n\t"    // Load 4 floats into NEON register
+        "fcmge v2.4s, v1.4s, v0.4s \n\t" // Compare each float with zero
+        "bif v1.16b, v0.16b, v2.16b \n\t"// If less than zero, set to zero
+        "st1 {v1.4s}, [%0, #-16] \n\t"   // Store the result back to memory
+        "subs x2, x2, #1 \n\t"           // Decrement loop counter and loop if not done
+        "b.ne 1b \n\t"
+
+        "2: \n\t"
+        "cbz x3, 3f \n\t"                // If no remaining elements, skip
+        "1: \n\t"
+        "ldr s1, [%0], #4 \n\t"          // Load one float into scalar register
+        "fcmp s1, s0 \n\t"               // Compare with zero
+        "bge 2f \n\t"                    // If greater or equal, skip setting to zero
+        "mov w2, #0 \n\t"
+        "str w2, [%0, #-4] \n\t"
+        "2: \n\t"
+        "subs x3, x3, #1 \n\t"           // Decrement loop counter and loop if not done
+        "b.ne 1b \n\t"
+
+        "3: \n\t"
+        "ldp x29, x30, [sp], #16 \n\t"   // Restore callee-saved registers and return
+        "ret \n\t"
+        :
+        : "r"(feature_in), "r"(elem_num)
+        : "x0", "x1", "x2", "x3", "v0", "v1", "v2", "s1"
+    );
 }
 
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
