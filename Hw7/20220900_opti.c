@@ -275,8 +275,9 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
 }
 
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
-    asm volatile (
-        "push {r4-r6, lr}\n\t"  // Save callee-saved registers
+    	//r0: c, r1: h, r2:w
+	//r3: r4: feature_in r5: feature_out r6:padded term
+	asm  (
 
         // Load parameters into registers
         "mov r4, %[feature_in]\n\t"  // r4 = feature_in
@@ -357,9 +358,7 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         "b c_loop\n\t"
 
         "c_done:\n\t"
-        // Restore callee-saved registers and return
-        "pop {r4-r6, lr}\n\t"
-        "bx lr\n\t"
+
         :
         : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W)
         : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "memory"
