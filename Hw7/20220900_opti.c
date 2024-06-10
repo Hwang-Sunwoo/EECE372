@@ -442,6 +442,7 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         : "r0", "r1", "r2", "r3", "r4", "r5", "memory"
     );
 }
+#include <arm_neon.h>
 
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     for (int oc = 0; oc < out_C; oc++) {
@@ -468,9 +469,9 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                                 
                                 // Multiply and accumulate
                                 "vmul.f32 s2, s0, s1\n\t"
-                                "vadd.f32 %P[sum], %P[sum], s2\n\t"
+                                "vadd.f32 %[sum], %[sum], s2\n\t"
                                 
-                                : [sum] "+w" (sum)
+                                : [sum] "+t" (sum)
                                 : [feature_in] "r" (feature_in), [weight] "r" (weight), 
                                   [feature_idx] "r" (feature_idx), [weight_idx] "r" (weight_idx)
                                 : "r0", "r1", "s0", "s1", "s2", "memory"
@@ -483,7 +484,6 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
         }
     }
 }
-
 
 void ReLU(float *feature_in, int elem_num){
     /*          PUT YOUR CODE HERE          */
