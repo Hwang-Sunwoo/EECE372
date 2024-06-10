@@ -275,75 +275,94 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
 }
 
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
-    int padded_H = H + 2;
-    int padded_W = W + 2;
+    asm volatile(
+        "push {r4-r6, lr}\n\t"  // Save callee-saved registers
 
-    asm volatile (
-        "mov r3, %2\n"  // r3 = C
-        "mov r4, %3\n"  // r4 = H
-        "mov r5, %4\n"  // r5 = W
+        // Load parameters into registers
+        "mov r4, %[feature_in]\n\t"  // r4 = feature_in
+        "mov r5, %[feature_out]\n\t" // r5 = feature_out
+        "mov r6, %[C]\n\t"           // r6 = C
+        "mov r0, %[H]\n\t"           // r0 = H
+        "mov r1, %[W]\n\t"           // r1 = W
 
-        // Outer loop (c)
-        "1:\n"
-        "cmp r3, #0\n"
-        "beq 4f\n"
+        // Calculate padded_H and padded_W
+        "add r2, r0, #2\n\t"   // r2 = padded_H = H + 2
+        "add r3, r1, #2\n\t"   // r3 = padded_W = W + 2
 
-        // Inner loop (h)
-        "mov r6, #0\n"  // r6 = h = 0
-        "2:\n"
-        "cmp r4, r6\n"
-        "beq 3f\n"
+        // Outer loop for channels (c)
+        "mov r7, #0\n\t"  // r7 = c = 0
+        "c_loop:\n\t"
+        "cmp r7, r6\n\t"  // if c >= C, break
+        "bge c_done\n\t"
 
-        // Innermost loop (w)
-        "mov r7, #0\n"  // r7 = w = 0
-        "3:\n"
-        "cmp r5, r7\n"
-        "beq 2b\n"
+        // Inner loop for rows (h)
+        "mov r8, #0\n\t"  // r8 = h = 0
+        "h_loop:\n\t"
+        "cmp r8, r2\n\t"  // if h >= padded_H, break
+        "bge h_done\n\t"
 
-        "cmp r6, #0\n"
-        "beq 5f\n"   // If h == 0
-        "cmp r6, r4\n"
-        "sub r0, r4, #1\n"
-        "beq 5f\n"   // If h == H + 1
-        "cmp r7, #0\n"
-        "beq 5f\n"   // If w == 0
-        "cmp r7, r5\n"
-        "sub r0, r5, #1\n"
-        "beq 5f\n"   // If w == W + 1
+        // Inner loop for columns (w)
+        "mov r9, #0\n\t"  // r9 = w = 0
+        "w_loop:\n\t"
+        "cmp r9, r3\n\t"  // if w >= padded_W, break
+        "bge w_done\n\t"
 
-        // Compute index for feature_in and feature_out
-        "sub r0, r6, #1\n"
-        "mul r0, r0, r5\n"
-        "sub r1, r7, #1\n"
-        "add r0, r0, r1\n"
-        "mul r0, r0, #4\n"   // 4 bytes per float
-        "add r0, r0, %0\n"   // r0 = &feature_in[c * H * W + (h - 1) * W + (w - 1)]
-        "ldr r0, [r0]\n"     // Load float from feature_in
+        // Calculate index for feature_out
+        "mul r10, r7, r2\n\t"  // r10 = c * padded_H
+        "mul r10, r10, r3\n\t" // r10 = c * padded_H * padded_W
+        "add r10, r10, r8\n\t" // r10 += h
+        "mul r10, r10, r3\n\t" // r10 *= padded_W
+        "add r10, r10, r9\n\t" // r10 += w
+        "lsl r10, r10, #2\n\t" // r10 *= 4 (sizeof(float))
 
-        "5:\n"
-        // Compute index for feature_out
-        "add r1, r2, r6\n"   // r1 = &feature_out[c * padded_H * padded_W + h * padded_W]
-        "add r1, r1, r7\n"   // r1 = &feature_out[c * padded_H * padded_W + h * padded_W + w]
-        "str r0, [r1]\n"     // Store float to feature_out
+        // Check if we are on the border
+        "cmp r8, #0\n\t"
+        "beq zero_pad\n\t"
+        "cmp r8, r2\n\t"
+        "sub r11, r2, #1\n\t"
+        "beq zero_pad\n\t"
+        "cmp r9, #0\n\t"
+        "beq zero_pad\n\t"
+        "cmp r9, r3\n\t"
+        "sub r11, r3, #1\n\t"
+        "beq zero_pad\n\t"
 
-        "add r7, r7, #1\n"   // Increment w
-        "b 3b\n"             // Back to innermost loop
+        // Not on the border, copy from feature_in
+        // Calculate index for feature_in
+        "sub r11, r8, #1\n\t"  // r11 = h - 1
+        "mul r11, r11, r1\n\t" // r11 *= W
+        "sub r12, r9, #1\n\t"  // r12 = w - 1
+        "add r11, r11, r12\n\t"// r11 += w - 1
+        "lsl r11, r11, #2\n\t" // r11 *= 4 (sizeof(float))
+        "add r11, r11, r4\n\t" // r11 += feature_in
+        "ldr r11, [r11]\n\t"   // r11 = feature_in[c * H * W + (h - 1) * W + (w - 1)]
+        "b store\n\t"
 
-        "4:\n"
-        // Decrement C and jump back to outer loop
-        "sub r3, r3, #1\n"
-        "b 1b\n"
+        "zero_pad:\n\t"
+        "mov r11, #0\n\t"  // r11 = 0
 
-        "3:\n"
-        // Decrement H and jump back to middle loop
-        "add r6, r6, #1\n"
-        "b 2b\n"
+        "store:\n\t"
+        "add r12, r5, r10\n\t"  // r12 = &feature_out[c * padded_H * padded_W + h * padded_W + w]
+        "str r11, [r12]\n\t"   // feature_out[...] = r11
 
-        "2:\n"  // Inner loop end
+        "add r9, r9, #1\n\t"   // w++
+        "b w_loop\n\t"
 
-        : // No output operands
-        : "r" (feature_in), "r" (feature_out), "r" (C), "r" (H), "r" (W)
-        : "r0", "r3", "r4", "r5", "r6", "r7", "memory" // clobbers
+        "w_done:\n\t"
+        "add r8, r8, #1\n\t"   // h++
+        "b h_loop\n\t"
+
+        "h_done:\n\t"
+        "add r7, r7, #1\n\t"   // c++
+        "b c_loop\n\t"
+
+        "c_done:\n\t"
+        // Restore callee-saved registers and return
+        "pop {r4-r6, lr}\n\t"
+        "bx lr\n\t"
+        :
+        : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W)
+        : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "memory"
     );
 }
 
