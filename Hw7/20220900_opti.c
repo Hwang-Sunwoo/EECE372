@@ -278,8 +278,6 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     int padded_H = H + 2;
     int padded_W = W + 2;
     asm (
-        "push {r4-r6, lr}\n\t"  // Save callee-saved registers
-
         // Load parameters into registers
         "mov r4, %[feature_in]\n\t"  // r4 = feature_in
         "mov r5, %[feature_out]\n\t" // r5 = feature_out
@@ -353,8 +351,6 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         "b c_loop\n\t"
 
         "c_done:\n\t"
-        "pop {r4-r6, lr}\n\t"  // Restore callee-saved registers and return
-        "bx lr\n\t"
         :
         : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
         : "r0", "r1", "r2", "r4", "r5", "r6", "r8", "r9", "r10", "r12", "memory"
