@@ -276,31 +276,103 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
 
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     /*          PUT YOUR CODE HERE          */
-    // Padding input : float *feature_in
-    // Padding output: float *feature_out
-    int padded_H = H + 2;
-    int padded_W = W + 2;
-    #pragma omp parallel for
-    for (int c = 0; c < C; c++) {
-        float *in_ptr = feature_in + c * H * W;
-        float *out_ptr = feature_out + c * padded_H * padded_W;
 
-        // Top row padding
-        memset(out_ptr, 0, padded_W * sizeof(float));
-        out_ptr += padded_W;
+    asm(
+    	// Function parameters
+    	// r0: feature_in (float *)
+    	// r1: feature_out (float *)
+    	// r2: C (int)
+    	// r3: H (int)
 
-        // Middle rows
-        for (int h = 0; h < H; h++) {
-            out_ptr[0] = 0.0f; // Left padding
-            memcpy(out_ptr + 1, in_ptr, W * sizeof(float)); // Copy middle
-            out_ptr[W + 1] = 0.0f; // Right padding
-            in_ptr += W;
-            out_ptr += padded_W;
-        }
+    	// Save callee-saved registers
+    	"push {r4-r11, lr}"
 
-        // Bottom row padding
-        memset(out_ptr, 0, padded_W * sizeof(float));
-    }
+    	// Load parameters into registers
+    	"mov r4, r0"       // r4 = feature_in
+    	"mov r5, r1"       // r5 = feature_out
+    	"mov r6, r2"       // r6 = C
+    	"mov r7, r3"       // r7 = H
+    	"ldr r8, [sp, #32]" // r8 = W (passed in stack, 4th argument)
+
+    	// Calculate padded_H and padded_W
+    	"add r9, r7, #2"   // r9 = padded_H = H + 2
+    	"add r10, r8, #2"  // r10 = padded_W = W + 2
+
+    	// Outer loop for channels (c)
+    	"mov r11, #0"      // r11 = c = 0
+	c_loop:
+    	"cmp r11, r6"      // if c >= C, break
+    	"bge c_done"
+
+    	// Inner loop for rows (h)
+    	"mov r12, #0"      // r12 = h = 0
+	h_loop:
+    	"cmp r12, r9"      // if h >= padded_H, break
+    	"bge h_done"
+
+    	// Inner loop for columns (w)
+    	"mov r2, #0"       // r2 = w = 0
+	w_loop:
+    	"cmp r2, r10"      // if w >= padded_W, break
+    	"bge w_done"
+
+    	// Calculate index for feature_out
+    	"mul r3, r11, r9"  // r3 = c * padded_H
+    	"mul r3, r3, r10"  // r3 = c * padded_H * padded_W
+    	"add r3, r3, r12"  // r3 += h
+    	"mul r3, r3, r10"  // r3 *= padded_W
+    	"add r3, r3, r2"   // r3 += w
+    	"lsl r3, r3, #2"   // r3 *= 4 (sizeof(float))
+
+    	// Check if we are on the border
+    	"cmp r12, #0"
+    	"beq zero_pad"
+    	"cmp r12, r9"
+    	"sub r0, r9, #1"
+    	"beq zero_pad"
+    	"cmp r2, #0"
+    	"beq zero_pad"
+    	"cmp r2, r10"
+    	"sub r0, r10, #1"
+    	"beq zero_pad"
+
+    	// Not on the border, copy from feature_in
+    	// Calculate index for feature_in
+    	"sub r0, r12, #1"  // r0 = h - 1
+    	"mul r0, r0, r8"   // r0 *= W
+    	"sub r1, r2, #1"   // r1 = w - 1
+    	"add r0, r0, r1"   // r0 += w - 1
+    	"mul r0, r0, #4"   // r0 *= 4 (sizeof(float))
+    	"add r0, r0, r4"   // r0 += feature_in
+    	"ldr r0, [r0]"     // r0 = feature_in[c * H * W + (h - 1) * W + (w - 1)]
+    	"b store"
+
+	zero_pad:
+    	"mov r0, #0"       // r0 = 0
+
+	store:
+    	"add r1, r5, r3"   // r1 = &feature_out[c * padded_H * padded_W + h * padded_W + w]
+    	"str r0, [r1]"     // feature_out[...] = r0
+
+    	"add r2, r2, #1"   // w++
+    	"b w_loop"
+
+	w_done:
+    	"add r12, r12, #1" // h++
+    	"b h_loop"
+
+	h_done:
+    	"add r11, r11, #1" // c++
+    	"b c_loop"
+
+	c_done:
+    	// Restore callee-saved registers and return
+    	"pop {r4-r11, lr}"
+    	"bx lr"
+	: // input operands
+        : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W)
+        : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "memory" // clobbers
+	);
 }
 
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
