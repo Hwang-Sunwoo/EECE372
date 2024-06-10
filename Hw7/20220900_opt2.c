@@ -393,18 +393,18 @@ int Get_pred(float *activation) {
     int pred;
     asm volatile (
         "mov r1, #0\n\t"          // pred = 0
-        "vldr s0, [%[act]]\n\t"   // s0 = activation[0]
-        "vmov s1, s0\n\t"         // max_val = s1 = activation[0]
+        "ldr s0, [%[act]]\n\t"   // s0 = activation[0]
+        "mov s1, s0\n\t"         // max_val = s1 = activation[0]
         "mov r2, #1\n\t"          // i = 1
         "1:\n\t"
         "cmp r2, %[class]\n\t"    // Compare i with CLASS
         "bge 2f\n\t"              // If i >= CLASS, break loop
         "add r3, %[act], r2, LSL #2\n\t" // r3 = &activation[i]
-        "vldr s2, [r3]\n\t"       // s2 = activation[i]
-        "vcmp s2, s1\n\t"         // Compare s2 with s1 (activation[i] with max_val)
-        "vmrs APSR_nzcv, fpscr\n\t" // Move FP status to APSR
+        "ldr s2, [r3]\n\t"       // s2 = activation[i]
+        "cmp s2, s1\n\t"         // Compare s2 with s1 (activation[i] with max_val)
+        "mrs APSR_nzcv, fpscr\n\t" // Move FP status to APSR
         "ble 3f\n\t"              // If activation[i] <= max_val, continue loop
-        "vmov s1, s2\n\t"         // max_val = activation[i]
+        "mov s1, s2\n\t"         // max_val = activation[i]
         "mov r1, r2\n\t"          // pred = i
         "3:\n\t"
         "add r2, r2, #1\n\t"      // i++
