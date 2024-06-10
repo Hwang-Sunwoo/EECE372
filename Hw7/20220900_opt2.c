@@ -325,12 +325,12 @@ void ReLU(float *feature_in, int elem_num) {
         "cmp r2, %[elem_num]\n\t"                // r2와 r1을 비교 (현재 인덱스와 배열의 길이를 비교)
         "beq loop_end\n\t"              // r2가 r1과 같으면 루프를 종료
 
-        "ldr r3, [%[feature_in], r2, LSL #2]\n\t"  // r0 + r2 * 4에서 값을 로드하여 r3에 저장 (현재 배열 요소)
-	"ldr r4, [r3]\n\t"
+	"ldr r3, [%[feature_in], r2, LSL #2]\n\t"  // feature_in + r2 * 4에서 값을 로드하여 r3에 저장 (현재 배열 요소)
         "cmp r3, #0\n\t"                // r3와 0을 비교
         "bge no_change\n\t"             // r3가 0보다 크거나 같으면 값을 변경하지 않음
 
-        "mov #0, [r3]\n\t"  // r0 + r2 * 4에 r3를 저장 (변경된 배열 요소)
+        "mov r3, #0\n\t"                // r3를 0으로 설정
+        "str r3, [%[feature_in], r2, LSL #2]\n\t"  // feature_in + r2 * 4에 r3를 저장 (변경된 배열 요소)	
 
         "no_change:\n\t"
         "add r2, r2, #1\n\t"            // r2를 1 증가 (다음 인덱스로 이동)
