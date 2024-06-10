@@ -281,18 +281,69 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     // Padding output: float *feature_out
     int padded_H = H + 2;
     int padded_W = W + 2;
+
+    #pragma omp parallel for collapse(2)
     for (int c = 0; c < C; c++) {
         for (int h = 0; h < padded_H; h++) {
-            for (int w = 0; w < padded_W; w++) {
+            for (int w = 0; w < padded_W; w += 4) { // NEON: process 4 elements at a time
                 if (h == 0 || h == padded_H - 1 || w == 0 || w == padded_W - 1) {
-                    feature_out[c * padded_H * padded_W + h * padded_W + w] = 0;
+                    asm volatile (
+                        "mov r1, %[feature_out]\n\t"
+                        "mov r2, %[c]\n\t"
+                        "mov r3, %[h]\n\t"
+                        "mov r4, %[w]\n\t"
+                        "mov r5, %[padded_H]\n\t"
+                        "mov r6, %[padded_W]\n\t"
+
+                        // Calculate address: feature_out + (c * padded_H * padded_W + h * padded_W + w)
+                        "mul r7, r2, r5\n\t"
+                        "mul r7, r7, r6\n\t"
+                        "add r7, r7, r3, LSL #2\n\t"
+                        "add r7, r7, r4, LSL #2\n\t"
+                        "add r7, r7, r1\n\t"
+
+                        // Set 4 elements to 0
+                        "vmov.f32 q0, #0.0\n\t"
+                        "vst1.32 {q0}, [r7]\n\t"
+                        :
+                        : [feature_out] "r" (feature_out), [c] "r" (c), [h] "r" (h), [w] "r" (w), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
+                        : "r1", "r2", "r3", "r4", "r5", "r6", "r7", "q0", "memory"
+                    );
                 } else {
-                    feature_out[c * padded_H * padded_W + h * padded_W + w] = feature_in[c * H * W + (h - 1) * W + (w - 1)];
+                    asm volatile (
+                        "mov r1, %[feature_in]\n\t"
+                        "mov r2, %[feature_out]\n\t"
+                        "mov r3, %[c]\n\t"
+                        "mov r4, %[h]\n\t"
+                        "mov r5, %[w]\n\t"
+                        "mov r6, %[H]\n\t"
+                        "mov r7, %[W]\n\t"
+                        "add r8, r4, #-1\n\t" // (h - 1)
+                        "add r9, r5, #-1\n\t" // (w - 1)
+
+                        // Load input values
+                        "mul r10, r3, r6\n\t"
+                        "mul r10, r10, r7\n\t"
+                        "add r10, r10, r8, LSL #2\n\t"
+                        "add r10, r10, r9, LSL #2\n\t"
+                        "add r10, r10, r1\n\t"
+                        "vld1.32 {q0}, [r10]\n\t" // Load 4 values from feature_in
+
+                        // Calculate address: feature_out + (c * padded_H * padded_W + h * padded_W + w)
+                        "mul r11, r3, %[padded_H]\n\t"
+                        "mul r11, r11, %[padded_W]\n\t"
+                        "add r11, r11, r4, LSL #2\n\t"
+                        "add r11, r11, r5, LSL #2\n\t"
+                        "add r11, r11, r2\n\t"
+                        "vst1.32 {q0}, [r11]\n\t" // Store 4 values to feature_out
+                        :
+                        : [feature_in] "r" (feature_in), [feature_out] "r" (feature_out), [c] "r" (c), [h] "r" (h), [w] "r" (w), [H] "r" (H), [W] "r" (W), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
+                        : "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "q0", "memory"
+                    );
                 }
             }
         }
     }
-    return;
 }
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
