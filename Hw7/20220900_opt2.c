@@ -420,7 +420,10 @@ void Get_CAM(float *activation, float *cam, int pred, float *weight) {
     /*          PUT YOUR CODE HERE          */
     // Get_CAM input : float *activation
     // Get_CAM output: float *cam
-    #pragma omp parallel for
+    int num_threads = omp_get_max_threads();
+    omp_set_num_threads(num_threads);
+
+    #pragma omp parallel for collapse(2)
     for (int h = 0; h < I3_H; h++) {
         for (int w = 0; w < I3_W; w += 4) {
             float32x4_t act_vec = vld1q_f32(&activation[h * I3_W + w]);
