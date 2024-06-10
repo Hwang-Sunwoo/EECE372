@@ -366,7 +366,7 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         "bx lr\n\t"
         :
         : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W)
-        : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "memory"
+        : "r0", "r1", "r2", "r3", "r4", "r5", "memory"
     );
 }
 
