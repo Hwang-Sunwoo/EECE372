@@ -274,23 +274,86 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
 }
 
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
-    /*          PUT YOUR CODE HERE          */
-    // Padding input : float *feature_in
-    // Padding output: float *feature_out
-    int padded_H = H + 2;
-    int padded_W = W + 2;
-    for (int c = 0; c < C; c++) {
-        for (int h = 0; h < padded_H; h++) {
-            for (int w = 0; w < padded_W; w++) {
-                if (h == 0 || h == padded_H - 1 || w == 0 || w == padded_W - 1) {
-                    feature_out[c * padded_H * padded_W + h * padded_W + w] = 0;
-                } else {
-                    feature_out[c * padded_H * padded_W + h * padded_W + w] = feature_in[c * H * W + (h - 1) * W + (w - 1)];
-                }
-            }
-        }
-    }
-    return;
+    asm volatile(
+        // Outer loop for channels (c)
+        "mov r0, #0\n\t"  // r0 = c = 0
+        "c_loop:\n\t"
+        "cmp r0, %[C]\n\t"  // if c >= C, break
+        "bge c_done\n\t"
+
+        // Inner loop for rows (h)
+        "mov r1, #0\n\t"  // r1 = h = 0
+        "h_loop:\n\t"
+        "add r3, %[H], #2\n\t"
+        "cmp r1, r3\n\t"  // if h >= padded_H, break
+        "bge h_done\n\t"
+
+        // Inner loop for columns (w)
+        "mov r2, #0\n\t"  // r2 = w = 0
+        "w_loop:\n\t"
+        "add r3, %[W], #2\n\t"
+        "cmp r2, r3\n\t"  // if w >= padded_W, break
+        "bge w_done\n\t"
+
+        // Calculate index for feature_out
+        "add r3, %[H], #2\n\t" // padded_H
+        "mul r4, r0, r3\n\t"  // r4 = c * padded_H
+        "add r3, %[W], #2\n\t" // padded_W
+        "mul r4, r4, r3\n\t"  // r4 = c * padded_H * padded_W
+        "mul r3, r1, %[W]\n\t" // h * padded_W
+        "add r4, r4, r3\n\t"
+        "add r4, r4, r2\n\t"   // r4 += w
+        "lsl r4, r4, #2\n\t"  // r4 *= 4 (sizeof(float))
+
+        // Check if we are on the border
+        "cmp r1, #0\n\t"
+        "beq zero_pad\n\t"
+        "add r3, %[H], #1\n\t" // padded_H - 1
+        "cmp r1, r3\n\t"
+        "beq zero_pad\n\t"
+        "cmp r2, #0\n\t"
+        "beq zero_pad\n\t"
+        "add r3, %[W], #1\n\t" // padded_W - 1
+        "cmp r2, r3\n\t"
+        "beq zero_pad\n\t"
+
+        // Not on the border, copy from feature_in
+        // Calculate index for feature_in
+        "mul r5, r0, %[H]\n\t"
+        "mul r5, r5, %[W]\n\t"
+        "sub r3, r1, #1\n\t"  // r3 = h - 1
+        "mul r3, r3, %[W]\n\t" // r3 *= W
+        "add r5, r5, r3\n\t"
+        "sub r3, r2, #1\n\t"  // r3 = w - 1
+        "add r5, r5, r3\n\t"  // r5 += w - 1
+        "lsl r5, r5, #2\n\t"  // r5 *= 4 (sizeof(float))
+        "add r5, %[feature_in], r5\n\t"
+        "ldr r5, [r5]\n\t"  // r5 = feature_in[c * H * W + (h - 1) * W + (w - 1)]
+        "b store\n\t"
+
+        "zero_pad:\n\t"
+        "mov r5, #0\n\t"  // r5 = 0
+
+        "store:\n\t"
+        "add r4, %[feature_out], r4\n\t"
+        "str r5, [r4]\n\t"  // feature_out[...] = r5
+
+        "add r2, r2, #1\n\t"  // w++
+        "b w_loop\n\t"
+
+        "w_done:\n\t"
+        "add r1, r1, #1\n\t"  // h++
+        "b h_loop\n\t"
+
+        "h_done:\n\t"
+        "add r0, r0, #1\n\t"  // c++
+        "b c_loop\n\t"
+
+        "c_done:\n\t"
+        :
+        : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W)
+        : "r0", "r1", "r2", "r3", "r4", "r5", "memory"
+    );
 }
 
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
