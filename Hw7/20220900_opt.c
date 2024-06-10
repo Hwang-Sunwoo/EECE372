@@ -389,15 +389,17 @@ int Get_pred(float *activation) {
     /*          PUT YOUR CODE HERE          */
     // Get_pred input : float *activation
     // Get_pred output: int pred
-    #pragma omp parallel for
-    for (int h = 0; h < I3_H; h++) {
-        for (int w = 0; w < I3_W; w += 4) {
-            float32x4_t act_vec = vld1q_f32(&activation[h * I3_W + w]);
-            float32x4_t w_vec = vld1q_f32(&weight[pred * FC_IN + h * I3_W + w]);
-            float32x4_t cam_vec = vmulq_f32(act_vec, w_vec);
-            vst1q_f32(&cam[h * I3_W + w], cam_vec);
+    float max_val = activation[0];
+    int pred = 0;
+
+    for (int i = 1; i < CLASS; i++) {
+        if (activation[i] > max_val) {
+            max_val = activation[i];
+            pred = i;
         }
     }
+
+    return pred;
 }
 
 void Get_CAM(float *activation, float *cam, int pred, float *weight) {
