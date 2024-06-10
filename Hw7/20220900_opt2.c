@@ -404,7 +404,8 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
 
                 for (int ic = 0; ic < in_C; ic++) {
                     for (int kh = 0; kh < K; kh++) {
-                        for (int kw = 0; kw < K; kw += 4) {
+                        int kw;
+                        for (kw = 0; kw <= K - 4; kw += 4) {
                             int ih = ih_base + kh;
                             int iw = iw_base + kw;
 
@@ -412,6 +413,12 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                             float32x4_t weight_vec = vld1q_f32(&weight[oc * in_C * K * K + ic * K * K + kh * K + kw]);
                             
                             sum_vec = vmlaq_f32(sum_vec, feature_vec, weight_vec);
+                        }
+                        // 처리되지 않은 나머지 요소를 수동으로 처리
+                        for (; kw < K; kw++) {
+                            int ih = ih_base + kh;
+                            int iw = iw_base + kw;
+                            sum_scalar += feature_in[ic * in_H * in_W + ih * in_W + iw] * weight[oc * in_C * K * K + ic * K * K + kh * K + kw];
                         }
                     }
                 }
