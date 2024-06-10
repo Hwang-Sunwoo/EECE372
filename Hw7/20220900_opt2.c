@@ -318,51 +318,44 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     return;
 }
 
-#include <arm_neon.h>
-
 void ReLU(float *feature_in, int elem_num) {
     asm volatile (
-        "stp x29, x30, [sp, #-16]! \n\t"
-        "mov x29, sp \n\t"
 
         // Initialize NEON registers
         "movi v0.4s, #0 \n\t" // Set v0 to zero vector
 
         // Compute number of full 4-float vectors
-        "lsr x2, %w1, #2 \n\t"           // x2 = elem_num / 4
-        "and x3, %w1, #3 \n\t"           // x3 = elem_num % 4
+        "lsr r2, %[num], #2 \n\t"           // x2 = elem_num / 4
+        "and r3, %[num], #3 \n\t"           // x3 = elem_num % 4
 
         // Loop through full 4-float vectors
-        "cbz x2, 2f \n\t"                // If there are no full vectors, skip
+        "cbz r2, 2f \n\t"                // If there are no full vectors, skip
         "1: \n\t"
-        "ld1 {v1.4s}, [%0], #16 \n\t"    // Load 4 floats into NEON register
+        "ld1 {v1.4s}, [%[in]], #16 \n\t"    // Load 4 floats into NEON register
         "fcmge v2.4s, v1.4s, v0.4s \n\t" // Compare each float with zero
         "bif v1.16b, v0.16b, v2.16b \n\t"// If less than zero, set to zero
-        "st1 {v1.4s}, [%0, #-16] \n\t"   // Store the result back to memory
-        "subs x2, x2, #1 \n\t"           // Decrement loop counter and loop if not done
+        "st1 {v1.4s}, [%[in]], #-16 \n\t"   // Store the result back to memory
+        "subs r2, r2, #1 \n\t"           // Decrement loop counter and loop if not done
         "b.ne 1b \n\t"
 
         "2: \n\t"
-        "cbz x3, 3f \n\t"                // If no remaining elements, skip
+        "cbz r3, 3f \n\t"                // If no remaining elements, skip
         "1: \n\t"
-        "ldr s1, [%0], #4 \n\t"          // Load one float into scalar register
+        "ldr s1, [%[in]], #4 \n\t"          // Load one float into scalar register
         "fcmp s1, s0 \n\t"               // Compare with zero
         "bge 2f \n\t"                    // If greater or equal, skip setting to zero
         "mov w2, #0 \n\t"
-        "str w2, [%0, #-4] \n\t"
+        "str w2, [%[in]], #-4 \n\t"
         "2: \n\t"
-        "subs x3, x3, #1 \n\t"           // Decrement loop counter and loop if not done
+        "subs r3, r3, #1 \n\t"           // Decrement loop counter and loop if not done
         "b.ne 1b \n\t"
 
         "3: \n\t"
-        "ldp x29, x30, [sp], #16 \n\t"   // Restore callee-saved registers and return
-        "ret \n\t"
         :
-        : "r"(feature_in), "r"(elem_num)
-        : "x0", "x1", "x2", "x3", "v0", "v1", "v2", "s1"
+        : [in] "r"(feature_in), [num] "r"(elem_num)
+        : "r2", "r3", "v0", "v1", "v2", "s1", "w2"
     );
 }
-
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Linear input : float *feature_in
