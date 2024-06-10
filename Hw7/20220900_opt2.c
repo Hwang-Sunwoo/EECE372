@@ -389,33 +389,32 @@ int Get_pred(float *activation) {
     int pred;
     asm volatile (
         "mov r1, #0\n\t"  // pred = 0
-        "vld1.32 {d0}, [%[activation]]\n\t"  // max_val = activation[0]
+        "vldr s0, [%[activation]]\n\t"  // max_val = activation[0]
         "mov r2, #1\n\t"  // i = 1
-	    
+        
     "get_pred_loop_start:\n\t"
         "cmp r2, %[class]\n\t"  // if (i >= CLASS) break
         "bge get_pred_loop_end\n\t"
         "add r4, %[activation], r2, LSL #2\n\t"  // address of activation[i]
-        "vld1.32 {d1}, [r4]\n\t"  // load activation[i]
-        "vcmp.f32 d0, d1\n\t"  // if (activation[i] > max_val)
-        "beq get_pred_continue_loop\n\t"  // if not greater, continue
-        "vmov.f32 d0, d1\n\t"  // max_val = activation[i]
+        "vldr s1, [r4]\n\t"  // load activation[i]
+        "vcmp.f32 s1, s0\n\t"  // if (activation[i] > max_val)
+        "vmrs APSR_nzcv, fpscr\n\t"  // Move FP status to APSR
+        "ble get_pred_continue_loop\n\t"  // if not greater, continue
+        "vmov.f32 s0, s1\n\t"  // max_val = activation[i]
         "mov r1, r2\n\t"  // pred = i
-	    
+        
     "get_pred_continue_loop:\n\t"
         "add r2, r2, #1\n\t"  // i++
         "b get_pred_loop_start\n\t"
-	    
+        
     "get_pred_loop_end:\n\t"
         "mov %[pred], r1\n\t"  // pred = r1
         : [pred] "=r" (pred)
         : [activation] "r" (activation), [class] "r" (CLASS)
-        : "r1", "r2", "r3", "r4", "d0", "d1", "d2", "memory"
+        : "r1", "r2", "r3", "r4", "s0", "s1", "memory"
     );
     return pred;
 }
-
-
 
 void Get_CAM(float *activation, float *cam, int pred, float *weight) {
     /*          PUT YOUR CODE HERE          */
