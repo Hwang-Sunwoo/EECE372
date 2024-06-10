@@ -275,17 +275,15 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
 }
 
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
-    asm volatile(
+    int padded_H = H + 2;
+    int padded_W = W + 2;
+    asm (
         "push {r4-r6, lr}\n\t"  // Save callee-saved registers
 
         // Load parameters into registers
         "mov r4, %[feature_in]\n\t"  // r4 = feature_in
         "mov r5, %[feature_out]\n\t" // r5 = feature_out
         "mov r6, %[C]\n\t"           // r6 = C
-
-        // Calculate padded_H and padded_W
-        "add r2, %[H], #2\n\t"   // r2 = padded_H = H + 2
-        "add r3, %[W], #2\n\t"   // r3 = padded_W = W + 2
 
         // Outer loop for channels (c)
         "mov r0, #0\n\t"  // r0 = c = 0
@@ -296,33 +294,33 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         // Inner loop for rows (h)
         "mov r1, #0\n\t"  // r1 = h = 0
         "h_loop:\n\t"
-        "cmp r1, r2\n\t"  // if h >= padded_H, break
+        "cmp r1, %[padded_H]\n\t"  // if h >= padded_H, break
         "bge h_done\n\t"
 
         // Inner loop for columns (w)
         "mov r8, #0\n\t"  // r8 = w = 0
         "w_loop:\n\t"
-        "cmp r8, r3\n\t"  // if w >= padded_W, break
+        "cmp r8, %[padded_W]\n\t"  // if w >= padded_W, break
         "bge w_done\n\t"
 
         // Calculate index for feature_out
-        "mul r9, r0, r2\n\t"  // r9 = c * padded_H
-        "mul r9, r9, r3\n\t"  // r9 = c * padded_H * padded_W
+        "mul r9, r0, %[padded_H]\n\t"  // r9 = c * padded_H
+        "mul r9, r9, %[padded_W]\n\t"  // r9 = c * padded_H * padded_W
         "add r9, r9, r1\n\t"  // r9 += h
-        "mul r9, r9, r3\n\t"  // r9 *= padded_W
+        "mul r9, r9, %[padded_W]\n\t"  // r9 *= padded_W
         "add r9, r9, r8\n\t"  // r9 += w
-        "lsl r9, r9, #2\n\t"  // r9 *= 4 (sizeof(float))
+        "lsl r9, r9, %[padded_H]\n\t"  // r9 *= 4 (sizeof(float))
 
         // Check if we are on the border
         "cmp r1, #0\n\t"
         "beq zero_pad\n\t"
-        "cmp r1, r2\n\t"
-        "sub r10, r2, #1\n\t"
+        "cmp r1, %[padded_H]\n\t"
+        "sub r10, %[padded_H], #1\n\t"
         "beq zero_pad\n\t"
         "cmp r8, #0\n\t"
         "beq zero_pad\n\t"
-        "cmp r8, r3\n\t"
-        "sub r10, r3, #1\n\t"
+        "cmp r8, %[padded_W]\n\t"
+        "sub r10, %[padded_W], #1\n\t"
         "beq zero_pad\n\t"
 
         // Not on the border, copy from feature_in
@@ -358,8 +356,8 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         "pop {r4-r6, lr}\n\t"  // Restore callee-saved registers and return
         "bx lr\n\t"
         :
-        : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W)
-        : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r8", "r9", "r10", "r12", "memory"
+        : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
+        : "r0", "r1", "r2", "r4", "r5", "r6", "r8", "r9", "r10", "r12", "memory"
     );
 }
 
