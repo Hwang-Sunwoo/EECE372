@@ -287,28 +287,23 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         // Inner loop for rows (h)
         "mov r1, #0\n\t"  // r12 = h = 0
         "h_loop:\n\t"
-	"ldr r3, %[H]\n\t"
-	"add r3, #2\n\t"
+	"add r3, %[H], #2\n\t"
         "cmp r1, r3\n\t"  // if h >= padded_H, break
         "bge h_done\n\t"
 
         // Inner loop for columns (w)
         "mov r2, #0\n\t"  // r2 = w = 0
         "w_loop:\n\t"
-	"ldr r3, %[W]\n\t"
-	"add r3, #2\n\t"
-        "cmp r2, r10\n\t"  // if w >= padded_W, break
+	"add r3, %[W], #2\n\t"
+        "cmp r2, r3\n\t"  // if w >= padded_W, break
         "bge w_done\n\t"
 
         // Calculate index for feature_out	
-	"ldr r3, %[H]\n\t"
-	"add r3, #2\n\t" // padded_H
+	"add r3, %[H], #2\n\t" // padded_H
         "mul r4, r0, r3\n\t"  // r4 = c * padded_H
-	"ldr r3, %[W]\n\t"
-	"add r3, #2\n\t" // padded_W
+	"add r3, %[W], #2\n\t" // padded_W
         "mul r4, r4, r3\n\t"  // r4 = c * padded_H * padded_W
-	"ldr r3, %[W]\n\t"
-	"add r3, #2\n\t" // padded_W
+	"add r3, %[W], #2\n\t" // padded_W
 	"mul r3, r3, r1\n\t" //h * padded_W
 	"add r4, r4, r3\n\t"
 	"add r4, r4, r2\n\t"   // r4 += w
@@ -317,14 +312,12 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         // Check if we are on the border
         "cmp r1, #0\n\t"
         "beq zero_pad\n\t"
-	"ldr r3, %[H]\n\t"
-	"add r3, #1\n\t" // padded_H -1
+	"add r3, %[H], #1\n\t" // padded_H -1
         "cmp r1, r3\n\t"
         "beq zero_pad\n\t"
         "cmp r2, #0\n\t"
         "beq zero_pad\n\t"
-	"ldr r3, %[W]\n\t"
-	"add r3, #1\n\t" // padded_W - 1
+	"add r3, %[W], #1\n\t" // padded_W - 1
         "cmp r2, r3\n\t"
         "beq zero_pad\n\t"
 
