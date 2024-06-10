@@ -319,29 +319,25 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
 }
 void ReLU(float *feature_in, int elem_num) {
     asm(
-	"mov r2, #0\n\t"                // r2를 0으로 초기화 (배열의 인덱스로 사용)
-
-        "loop_start:\n\t"
-        "cmp r2, %[elem_num]\n\t"                // r2와 r1을 비교 (현재 인덱스와 배열의 길이를 비교)
-        "beq loop_end\n\t"              // r2가 r1과 같으면 루프를 종료
-
-	"ldr r3, [%[feature_in], r2, LSL #2]\n\t"  // feature_in + r2 * 4에서 값을 로드하여 r3에 저장 (현재 배열 요소)
-        "cmp r3, #0\n\t"                // r3와 0을 비교
-        "bge no_change\n\t"             // r3가 0보다 크거나 같으면 값을 변경하지 않음
-
-        "mov r3, #0\n\t"                // r3를 0으로 설정
-        "str r3, [%[feature_in], r2, LSL #2]\n\t"  // feature_in + r2 * 4에 r3를 저장 (변경된 배열 요소)	
-
-        "no_change:\n\t"
-        "add r2, r2, #1\n\t"            // r2를 1 증가 (다음 인덱스로 이동)
-        "b loop_start\n\t"              // 루프 시작으로 돌아감
-
-        "loop_end:\n\t"
+        "mov r2, #0\n\t"  // r2를 0으로 초기화 i
+        "relu_loop_start:\n\t"
+        "cmp r2, %[elem_num]\n\t"  // r2와 elem_num을 비교 )
+        "beq relu_loop_end\n\t"    // r2가 elem_num과 같으면 루프를 종료
+        "ldr r3, [%[feature_in], r2, LSL #2]\n\t"  // feature_in + r2 * 4에서 값을 로드하여 r3에 저장 
+        "cmp r3, #0\n\t"    // r3와 0을 비교
+        "bge relu_no_change\n\t"  // r3가 0보다 크거나 같으면 값을 변경하지 않음
+        "mov r3, #0\n\t"    // r3를 0으로 설정
+        "str r3, [%[feature_in], r2, LSL #2]\n\t"  // feature_in + r2 * 4에 r3를 저장 
+        "relu_no_change:\n\t"
+        "add r2, r2, #1\n\t"  // r2를 1 증가 i++
+        "b relu_loop_start\n\t"  // 루프 시작으로 돌아감
+        "relu_loop_end:\n\t"
         :
         : [feature_in] "r"(feature_in), [elem_num] "r"(elem_num)
-        : "r2", "r3", "r4", "memory"
+        : "r2", "r3", "memory"
     );
 }
+
 
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
@@ -392,35 +388,28 @@ void Log_softmax(float *activation) {
 int Get_pred(float *activation) {
     int pred;
     asm volatile (
-        "mov r1, #0\n\t"                // pred = 0
-        "vldr s0, [%[activation]]\n\t"  // max_val = activation[0]
-
-        "mov r2, #1\n\t"                // i = 1
-        "ldr r3, =CLASS\n\t"            // r3 = CLASS
-
-    "loop_start:\n\t"
-        "cmp r2, r3\n\t"                // if (i >= CLASS) break
-        "bge loop_end\n\t"
-
-        "add r4, %[activation], r2, lsl #2\n\t" // address of activation[i]
-        "vldr s1, [r4]\n\t"                     // load activation[i]
-
-        "vcgt.f32 s2, s1, s0\n\t"       // if (activation[i] > max_val)
-        "vmrs APSR_nzcv, fpscr\n\t"     // move the status flags to APSR
-        "beq continue_loop\n\t"         // if not greater, continue
-
-        "vmov.f32 s0, s1\n\t"           // max_val = activation[i]
-        "mov r1, r2\n\t"                // pred = i
-
-    "continue_loop:\n\t"
-        "add r2, r2, #1\n\t"            // i++
-        "b loop_start\n\t"
-
-    "loop_end:\n\t"
-        "mov %[pred], r1\n\t"           // pred = r1
+        "mov r1, #0\n\t"  // pred = 0
+        "vld1.32 {d0}, [%[activation]]\n\t"  // max_val = activation[0]
+        "mov r2, #1\n\t"  // i = 1
+        "ldr r3, =CLASS\n\t"  // r3 = CLASS
+    "get_pred_loop_start:\n\t"
+        "cmp r2, r3\n\t"  // if (i >= CLASS) break
+        "bge get_pred_loop_end\n\t"
+        "add r4, %[activation], r2, LSL #2\n\t"  // address of activation[i]
+        "vld1.32 {d1}, [r4]\n\t"  // load activation[i]
+        "vcgt.f32 d2, d1, d0\n\t"  // if (activation[i] > max_val)
+        "vmrs APSR_nzcv, fpscr\n\t"  // move the status flags to APSR
+        "beq get_pred_continue_loop\n\t"  // if not greater, continue
+        "vmov.f32 d0, d1\n\t"  // max_val = activation[i]
+        "mov r1, r2\n\t"  // pred = i
+    "get_pred_continue_loop:\n\t"
+        "add r2, r2, #1\n\t"  // i++
+        "b get_pred_loop_start\n\t"
+    "get_pred_loop_end:\n\t"
+        "mov %[pred], r1\n\t"  // pred = r1
         : [pred] "=r" (pred)
         : [activation] "r" (activation)
-        : "r1", "r2", "r3", "r4", "s0", "s1", "s2", "memory"
+        : "r1", "r2", "r3", "r4", "d0", "d1", "d2", "memory"
     );
     return pred;
 }
