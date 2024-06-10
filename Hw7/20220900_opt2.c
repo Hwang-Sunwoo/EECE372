@@ -397,14 +397,15 @@ int Get_pred(float *activation) {
         "bge get_pred_loop_end\n\t"
         "add r4, %[activation], r2, LSL #2\n\t"  // address of activation[i]
         "vld1.32 {d1}, [r4]\n\t"  // load activation[i]
-        "vcgt.f32 d2, d1, d0\n\t"  // if (activation[i] > max_val)
-        "vmrs APSR_nzcv, fpscr\n\t"  // move the status flags to APSR
+        "vcmp.f32 d0, d1\n\t"  // if (activation[i] > max_val)
         "beq get_pred_continue_loop\n\t"  // if not greater, continue
         "vmov.f32 d0, d1\n\t"  // max_val = activation[i]
         "mov r1, r2\n\t"  // pred = i
+	    
     "get_pred_continue_loop:\n\t"
         "add r2, r2, #1\n\t"  // i++
         "b get_pred_loop_start\n\t"
+	    
     "get_pred_loop_end:\n\t"
         "mov %[pred], r1\n\t"  // pred = r1
         : [pred] "=r" (pred)
