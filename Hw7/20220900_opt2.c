@@ -317,45 +317,44 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     }
     return;
 }
-
 void ReLU(float *feature_in, int elem_num) {
     asm volatile (
-
         // Initialize NEON registers
-        "movi r0.4s, #0 \n\t" // Set v0 to zero vector
+        "vmov.f32 q0, #0.0 \n\t" // Set q0 to zero vector
 
         // Compute number of full 4-float vectors
-        "lsr r2, %[num], #2 \n\t"           // x2 = elem_num / 4
-        "and r3, %[num], #3 \n\t"           // x3 = elem_num % 4
+        "lsr r2, %[num], #2 \n\t"           // r2 = elem_num / 4
+        "and r3, %[num], #3 \n\t"           // r3 = elem_num % 4
 
         // Loop through full 4-float vectors
-        "cbz r2, 2f \n\t"                // If there are no full vectors, skip
+        "cmp r2, #0 \n\t"
+        "beq 2f \n\t"                // If there are no full vectors, skip
         "1: \n\t"
-        "ld1 {r1.4s}, [%[in]], #16 \n\t"    // Load 4 floats into NEON register
-        "fcmge r4.4s, r1.4s, r0.4s \n\t" // Compare each float with zero
-        "bif r1.16b, r0.16b, r4.16b \n\t"// If less than zero, set to zero
-        "st1 {r1.4s}, [%[in]], #-16 \n\t"   // Store the result back to memory
+        "vld1.32 {q1}, [%[in]]! \n\t"    // Load 4 floats into NEON register
+        "vmax.f32 q1, q1, q0 \n\t" // Compare each float with zero
+        "vst1.32 {q1}, [%[in]]! \n\t"   // Store the result back to memory
         "subs r2, r2, #1 \n\t"           // Decrement loop counter and loop if not done
-        "b.ne 1b \n\t"
+        "bne 1b \n\t"
 
         "2: \n\t"
-        "cbz r3, 3f \n\t"                // If no remaining elements, skip
-        "1: \n\t"
-        "ldr r5, [%[in]], #4 \n\t"          // Load one float into scalar register
-        "fcmp r5, s0 \n\t"               // Compare with zero
-        "bge 2f \n\t"                    // If greater or equal, skip setting to zero
-        "mov r6, #0 \n\t"
-        "str r6, [%[in]], #-4 \n\t"
-        "2: \n\t"
-        "subs r3, r3, #1 \n\t"           // Decrement loop counter and loop if not done
-        "b.ne 1b \n\t"
-
+        "cmp r3, #0 \n\t"
+        "beq 3f \n\t"                // If no remaining elements, skip
         "3: \n\t"
+        "cmp r3, #0 \n\t"                // If no remaining elements, skip
+        "beq 4f \n\t"
+        "4: \n\t"
+        "ldr r4, [%[in]] \n\t"          // Load one float into scalar register
+        "cmp r4, #0 \n\t"               // Compare with zero
+        "movlt r4, #0 \n\t"
+        "str r4, [%[in]], #4 \n\t"
+        "subs r3, r3, #1 \n\t"           // Decrement loop counter and loop if not done
+        "bne 4b \n\t"
         :
         : [in] "r"(feature_in), [num] "r"(elem_num)
-        : "r2", "r3", "r0", "r1", "r4", "r5", "r6"
+        : "r2", "r3", "r4", "q0", "q1"
     );
 }
+
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Linear input : float *feature_in
