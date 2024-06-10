@@ -318,40 +318,35 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     return;
 }
 void ReLU(float *feature_in, int elem_num) {
-    asm volatile (
-        // Initialize NEON registers
-        "vmov.f32 q0, #0.0 \n\t" // Set q0 to zero vector
 
-        // Compute number of full 4-float vectors
-        "lsr r2, %[num], #2 \n\t"           // r2 = elem_num / 4
-        "and r3, %[num], #3 \n\t"           // r3 = elem_num % 4
+    asm(
+    "push {r4, r5, lr}\n\t"         // 프로로그: 레지스터와 스택 설정
+    "cmp r1, #0\n\t"                 // elem_num이 0인지 확인
+    "ble ReLU_end\n\t"               // elem_num이 0 이하이면 종료
 
-        // Loop through full 4-float vectors
-        "cmp r2, #0 \n\t"
-        "beq 2f \n\t"                // If there are no full vectors, skip
-        "1: \n\t"
-        "vld1.32 {q1}, [%[in]]! \n\t"    // Load 4 floats into NEON register
-        "vmax.f32 q1, q1, q0 \n\t" // Compare each float with zero
-        "vst1.32 {q1}, [%[in]]! \n\t"   // Store the result back to memory
-        "subs r2, r2, #1 \n\t"           // Decrement loop counter and loop if not done
-        "bne 1b \n\t"
+    "mov r2, #0\n\t"                 // 인덱스 초기화 (0)
 
-        "2: \n\t"
-        "cmp r3, #0 \n\t"
-        "beq 3f \n\t"                // If no remaining elements, skip
-        "3: \n\t"
-        "cmp r3, #0 \n\t"                // If no remaining elements, skip
-        "beq 4f \n\t"
-        "4: \n\t"
-        "ldr r4, [%[in]] \n\t"          // Load one float into scalar register
-        "cmp r4, #0 \n\t"               // Compare with zero
-        "movlt r4, #0 \n\t"
-        "str r4, [%[in]], #4 \n\t"
-        "subs r3, r3, #1 \n\t"           // Decrement loop counter and loop if not done
-        "bne 4b \n\t"
-        :
-        : [in] "r"(feature_in), [num] "r"(elem_num)
-        : "r2", "r3", "r4", "q0", "q1", "memory"
+    "ReLU_loop:\n\t"                     // 루프 시작
+    "lsl r4, r2, #2\n\t"            // 현재 요소 주소 계산
+    "add r4, r0, r4\n\t"
+    "vldr s0, [r4]\n\t"              // 요소 값 로드
+
+    "vmov.f32 s1, #0.0\n\t"         // 0과 비교
+    "vcmp.f32 s0, s1\n\t"
+    "vmrs APSR_nzcv, FPSCR\n\t"     // 비교 결과를 상태 레지스터로 이동
+
+    "bge ReLU_skip\n\t"             // 음수인 경우 건너뜀
+    "vmov.f32 s0, s1\n\t"           // 음수인 경우 0으로 설정
+    "vstr s0, [r4]\n\t"             // 배열에 다시 저장
+
+    "ReLU_skip:\n\t"
+    "add r2, r2, #1\n\t"            // 인덱스 증가
+    "cmp r2, r1\n\t"                // 루프 조건 확인
+    "blt ReLU_loop\n\t"             // 조건이 만족되면 루프 반복
+
+    "ReLU_end:\n\t"                      // 에필로그: 레지스터와 스택 복원
+    "pop {r4, r5, lr}\n\t"
+    "bx lr\n\t"                     // 함수 종료 및 복귀
     );
 }
 
