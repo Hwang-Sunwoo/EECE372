@@ -275,7 +275,7 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
 }
 
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
-    asm(
+    asm volatile(
         "push {r4-r6, r8-r10, lr}\n\t"  // Save callee-saved registers
 
         // Load parameters into registers
@@ -308,42 +308,42 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         "bge w_done\n\t"
 
         // Calculate index for feature_out
-        "mul r7, r1, r10\n\t"   // r7 = c * padded_H
-        "mul r7, r7, r0\n\t"    // r7 = c * padded_H * padded_W
-        "add r7, r7, r2\n\t"    // r7 += h
-        "mul r7, r7, r0\n\t"    // r7 *= padded_W
-        "add r7, r7, r3\n\t"    // r7 += w
-        "lsl r7, r7, #2\n\t"    // r7 *= 4 (sizeof(float))
+        "mul r12, r1, r10\n\t"   // r12 = c * padded_H
+        "mul r12, r12, r0\n\t"    // r12 = c * padded_H * padded_W
+        "add r12, r12, r2\n\t"    // r12 += h
+        "mul r12, r12, r0\n\t"    // r12 *= padded_W
+        "add r12, r12, r3\n\t"    // r12 += w
+        "lsl r12, r12, #2\n\t"    // r12 *= 4 (sizeof(float))
 
         // Check if we are on the border
         "cmp r2, #0\n\t"
         "beq zero_pad\n\t"
         "cmp r2, r10\n\t"
-        "sub r12, r10, #1\n\t"
+        "sub r11, r10, #1\n\t"
         "beq zero_pad\n\t"
         "cmp r3, #0\n\t"
         "beq zero_pad\n\t"
         "cmp r3, r0\n\t"
-        "sub r12, r0, #1\n\t"
+        "sub r11, r0, #1\n\t"
         "beq zero_pad\n\t"
 
         // Not on the border, copy from feature_in
         // Calculate index for feature_in
-        "sub r12, r2, #1\n\t"  // r12 = h - 1
-        "mul r12, r12, r9\n\t" // r12 *= W
-        "sub r11, r3, #1\n\t"  // r11 = w - 1
-        "add r12, r12, r11\n\t"// r12 += w - 1
-        "lsl r12, r12, #2\n\t" // r12 *= 4 (sizeof(float))
-        "add r12, r12, r4\n\t" // r12 += feature_in
-        "ldr r12, [r12]\n\t"   // r12 = feature_in[c * H * W + (h - 1) * W + (w - 1)]
+        "sub r11, r2, #1\n\t"  // r11 = h - 1
+        "mul r11, r11, r9\n\t" // r11 *= W
+        "sub r10, r3, #1\n\t"  // r10 = w - 1
+        "add r11, r11, r10\n\t"// r11 += w - 1
+        "lsl r11, r11, #2\n\t" // r11 *= 4 (sizeof(float))
+        "add r11, r11, r4\n\t" // r11 += feature_in
+        "ldr r11, [r11]\n\t"   // r11 = feature_in[c * H * W + (h - 1) * W + (w - 1)]
         "b store\n\t"
 
         "zero_pad:\n\t"
-        "mov r12, #0\n\t"  // r12 = 0
+        "mov r11, #0\n\t"  // r11 = 0
 
         "store:\n\t"
-        "add r11, r5, r7\n\t"  // r11 = &feature_out[c * padded_H * padded_W + h * padded_W + w]
-        "str r12, [r11]\n\t"   // feature_out[...] = r12
+        "add r10, r5, r12\n\t"  // r10 = &feature_out[c * padded_H * padded_W + h * padded_W + w]
+        "str r11, [r10]\n\t"   // feature_out[...] = r11
 
         "add r3, r3, #1\n\t"   // w++
         "b w_loop\n\t"
