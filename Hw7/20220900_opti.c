@@ -352,7 +352,7 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
 
         "c_done:\n\t"
         :
-        : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
+        : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "g"(C), [H] "g"(H), [W] "g"(W), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
         : "r0", "r1", "r2", "r4", "r5", "r6", "r8", "r9", "r10", "r12", "memory"
     );
 }
