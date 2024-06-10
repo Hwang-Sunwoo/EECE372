@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <wiringPi.h>
+#include <arm_neon.h>
 
 
 #include "stb_image.h"
@@ -129,7 +130,7 @@ int main(int argc, char *argv[]) {
             if (buf[0] == 'c' || buf[0] == 'C') {
                 system("libcamera-still -e bmp --width 280 --height 280 -t 20000 -o image.bmp");
                 file = "image.bmp";
-                /*
+                
                 // Send the captured image via serial
                 FILE *fp = fopen("image.bmp", "rb");
                 if (fp == NULL) {
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]) {
                     write(fd, fbuf, bytesRead);
                 }
                 fclose(fp);
-                */
+                
                 break;
             } 
         }
@@ -210,11 +211,10 @@ int main(int argc, char *argv[]) {
     
     if (wiringPiSetup() == -1){
 		return 1;
-	}
-
-	for(int i = 0; i < 8; i++){
-		pinMode(SEGMENT_PINS[i], OUTPUT);
-   	}
+    }
+    for(int i = 0; i < 8; i++){
+	pinMode(SEGMENT_PINS[i], OUTPUT);
+    }
 
     display_sev_seg(pred);
     
@@ -279,68 +279,84 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     // Padding output: float *feature_out
     int padded_H = H + 2;
     int padded_W = W + 2;
+    #pragma omp parallel for
     for (int c = 0; c < C; c++) {
-        for (int h = 0; h < padded_H; h++) {
-            for (int w = 0; w < padded_W; w++) {
-                if (h == 0 || h == padded_H - 1 || w == 0 || w == padded_W - 1) {
-                    feature_out[c * padded_H * padded_W + h * padded_W + w] = 0;
-                } else {
-                    feature_out[c * padded_H * padded_W + h * padded_W + w] = feature_in[c * H * W + (h - 1) * W + (w - 1)];
-                }
-            }
+        float *in_ptr = feature_in + c * H * W;
+        float *out_ptr = feature_out + c * padded_H * padded_W;
+
+        // Top row padding
+        memset(out_ptr, 0, padded_W * sizeof(float));
+        out_ptr += padded_W;
+
+        // Middle rows
+        for (int h = 0; h < H; h++) {
+            out_ptr[0] = 0.0f; // Left padding
+            memcpy(out_ptr + 1, in_ptr, W * sizeof(float)); // Copy middle
+            out_ptr[W + 1] = 0.0f; // Right padding
+            in_ptr += W;
+            out_ptr += padded_W;
         }
+
+        // Bottom row padding
+        memset(out_ptr, 0, padded_W * sizeof(float));
     }
-    return;
 }
 
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Conv_2d input : float *feature_in
     // Conv_2d output: float *feature_out
+    #pragma omp parallel for collapse(3)
     for (int oc = 0; oc < out_C; oc++) {
         for (int oh = 0; oh < out_H; oh++) {
             for (int ow = 0; ow < out_W; ow++) {
-                float sum = bias[oc];
+                float32x4_t sum_vec = vdupq_n_f32(bias[oc]);
                 for (int ic = 0; ic < in_C; ic++) {
                     for (int kh = 0; kh < K; kh++) {
                         for (int kw = 0; kw < K; kw++) {
                             int ih = oh * S + kh;
                             int iw = ow * S + kw;
-                            sum += feature_in[ic * in_H * in_W + ih * in_W + iw] * weight[oc * in_C * K * K + ic * K * K + kh * K + kw];
+                            float *in_ptr = feature_in + ic * in_H * in_W + ih * in_W + iw;
+                            float *w_ptr = weight + oc * in_C * K * K + ic * K * K + kh * K + kw;
+                            float32x4_t in_vec = vld1q_f32(in_ptr);
+                            float32x4_t w_vec = vld1q_f32(w_ptr);
+                            sum_vec = vmlaq_f32(sum_vec, in_vec, w_vec);
                         }
                     }
                 }
-                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum;
+                feature_out[oc * out_H * out_W + oh * out_W + ow] = vaddvq_f32(sum_vec);
             }
         }
     }
-    return;
 }
 
 void ReLU(float *feature_in, int elem_num){
     /*          PUT YOUR CODE HERE          */
     // ReLU input : float *feature_in
     // ReLU output: float *feature_in
-    for (int i = 0; i < elem_num; i++) {
-        if (feature_in[i] < 0) {
-            feature_in[i] = 0;
-        }
+    float32x4_t zero = vdupq_n_f32(0.0f);
+    #pragma omp parallel for
+    for (int i = 0; i < elem_num; i += 4) {
+        float32x4_t in_vec = vld1q_f32(&feature_in[i]);
+        float32x4_t result = vmaxq_f32(in_vec, zero);
+        vst1q_f32(&feature_in[i], result);
     }
-    return;
 }
 
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Linear input : float *feature_in
     // Linear output: float *feature_out
+    #pragma omp parallel for
     for (int out = 0; out < FC_OUT; out++) {
-        float sum = bias[out];
-        for (int in = 0; in < FC_IN; in++) {
-            sum += feature_in[in] * weight[out * FC_IN + in];
+        float32x4_t sum_vec = vdupq_n_f32(bias[out]);
+        for (int in = 0; in < FC_IN; in += 4) {
+            float32x4_t in_vec = vld1q_f32(&feature_in[in]);
+            float32x4_t w_vec = vld1q_f32(&weight[out * FC_IN + in]);
+            sum_vec = vmlaq_f32(sum_vec, in_vec, w_vec);
         }
-        feature_out[out] = sum;
+        feature_out[out] = vaddvq_f32(sum_vec);
     }
-    return;
 }
 
 void Log_softmax(float *activation) {
@@ -370,12 +386,19 @@ int Get_pred(float *activation) {
     /*          PUT YOUR CODE HERE          */
     // Get_pred input : float *activation
     // Get_pred output: int pred
-
+    float32x4_t max_vec = vld1q_f32(&activation[0]);
     int pred = 0;
-    float max_val = activation[0];
-    for (int i = 1; i < CLASS; i++) {
-        if (activation[i] > max_val) {
-            max_val = activation[i];
+
+    for (int i = 4; i < CLASS; i += 4) {
+        float32x4_t act_vec = vld1q_f32(&activation[i]);
+        uint32x4_t mask = vcgtq_f32(act_vec, max_vec);
+        max_vec = vbslq_f32(mask, act_vec, max_vec);
+    }
+
+    float max_val = vgetq_lane_f32(max_vec, 0);
+    for (int i = 1; i < 4; i++) {
+        if (vgetq_lane_f32(max_vec, i) > max_val) {
+            max_val = vgetq_lane_f32(max_vec, i);
             pred = i;
         }
     }
@@ -386,12 +409,15 @@ void Get_CAM(float *activation, float *cam, int pred, float *weight) {
     /*          PUT YOUR CODE HERE          */
     // Get_CAM input : float *activation
     // Get_CAM output: float *cam
+    #pragma omp parallel for
     for (int h = 0; h < I3_H; h++) {
-        for (int w = 0; w < I3_W; w++) {
-            cam[h * I3_W + w] = activation[h * I3_W + w] * weight[pred * FC_IN + h * I3_W + w];
+        for (int w = 0; w < I3_W; w += 4) {
+            float32x4_t act_vec = vld1q_f32(&activation[h * I3_W + w]);
+            float32x4_t w_vec = vld1q_f32(&weight[pred * FC_IN + h * I3_W + w]);
+            float32x4_t cam_vec = vmulq_f32(act_vec, w_vec);
+            vst1q_f32(&cam[h * I3_W + w], cam_vec);
         }
     }
-    return;
 }
 
 void save_image(float *feature_scaled, float *cam) {
