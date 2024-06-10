@@ -351,7 +351,7 @@ void ReLU(float *feature_in, int elem_num) {
         "bne 4b \n\t"
         :
         : [in] "r"(feature_in), [num] "r"(elem_num)
-        : "r2", "r3", "r4", "q0", "q1"
+        : "r2", "r3", "r4", "q0", "q1", "memory"
     );
 }
 
