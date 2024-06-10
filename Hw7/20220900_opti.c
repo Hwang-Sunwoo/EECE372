@@ -491,29 +491,28 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
         // Calculate input height and width indices
         "mul r6, r1, %[S]\n\t"  // r6 = oh * S
         "add r6, r6, r4\n\t"  // r6 += kh
-        "mul r10, r2, %[S]\n\t"  // r7 = ow * S
-        "add r10, r10, r5\n\t"  // r7 += kw
+        "mul r10, r2, %[S]\n\t"  // r10 = ow * S
+        "add r10, r10, r5\n\t"  // r10 += kw
 
         // Load input feature value
         "mul r8, r3, %[in_H]\n\t"
         "mul r8, r8, %[in_W]\n\t"  // r8 = ic * in_H * in_W
-        "add r8, r8, r6\n\t"  // r8 += ih
-        "mul r8, r8, %[in_W]\n\t"
+	"mul r9, r6, %[in_W]\n\t"
+        "add r8, r8, r9\n\t"  // r8 += ih
         "add r8, r8, r10\n\t"  // r8 += iw
-        "lsl r8, r8, #2\n\t"  // r8 *= 4 (sizeof(float))
-        "vld1.32 {d0-d1}, [%[feature_in], r8]\n\t"  // d0 = feature_in[ic * in_H * in_W + ih * in_W + iw]
+        "vld1.32 {d0-d1}, [%[feature_in], r8, lsl #2]\n\t"  // d0 = feature_in[ic * in_H * in_W + ih * in_W + iw]
 
         // Load weight value
         "mul r9, r0, %[in_C]\n\t"
         "mul r9, r9, %[K]\n\t"
         "mul r9, r9, %[K]\n\t"  // r9 = oc * in_C * K * K
-        "add r9, r9, r3\n\t"
-        "mul r9, r9, %[K]\n\t"
-        "add r9, r9, r4\n\t"
-        "mul r9, r9, %[K]\n\t"
+        "mul r8, %[k], r3\n\t"
+        "mul r8, r8, %[K]\n\t"
+        "add r9, r9, r8\n\t"
+        "mul r8, r4, %[K]\n\t"
+	"add r9, r8, r5\n\t"
         "add r9, r9, r5\n\t"  // r9 += ic * K * K + kh * K + kw
-        "lsl r9, r9, #2\n\t"  // r9 *= 4 (sizeof(float))
-        "vld1.32 {d2-d3}, [%[weight], r9]\n\t"  // d2 = weight[oc * in_C * K * K + ic * K * K + kh * K + kw]
+        "vld1.32 {d2-d3}, [%[weight], r9, lsl #2]\n\t"  // d2 = weight[oc * in_C * K * K + ic * K * K + kh * K + kw]
 
         // Multiply and accumulate
         "vmla.f32 q0, q1, q2\n\t"
