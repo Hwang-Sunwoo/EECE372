@@ -336,6 +336,7 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     }
 }
 */
+/*
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     int padded_H = H + 2;
     int padded_W = W + 2;
@@ -357,6 +358,41 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         }
     }
 }
+*/
+#include <omp.h>
+
+void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
+    int padded_H = H + 2;
+    int padded_W = W + 2;
+
+    #pragma omp parallel for
+    for (int c = 0; c < C; c++) {
+        for (int h = 0; h < padded_H; h++) {
+            for (int w = 0; w < padded_W; w++) {
+                int out_index = c * padded_H * padded_W + h * padded_W + w;
+                if (h == 0 || h == padded_H - 1 || w == 0 || w == padded_W - 1) {
+                    asm (
+                        "vmov.f32 s0, #0.0\n\t"
+                        "vstr s0, [%[out], #0]\n\t"
+                        :
+                        : [out] "r" (&feature_out[out_index])
+                        : "s0", "memory"
+                    );
+                } else {
+                    int in_index = c * H * W + (h - 1) * W + (w - 1);
+                    asm (
+                        "vldr s0, [%[in], #0]\n\t"
+                        "vstr s0, [%[out], #0]\n\t"
+                        :
+                        : [in] "r" (&feature_in[in_index]), [out] "r" (&feature_out[out_index])
+                        : "s0", "memory"
+                    );
+                }
+            }
+        }
+    }
+}
+
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Conv_2d input : float *feature_in
