@@ -321,26 +321,31 @@ void ReLU(float *feature_in, int elem_num){
     /*          PUT YOUR CODE HERE          */
     // ReLU input : float *feature_in
     // ReLU output: float *feature_in
-    for (int i = 0; i < elem_num; i++) {
-        if (feature_in[i] < 0) {
-            feature_in[i] = 0;
-        }
+    float32x4_t zero = vdupq_n_f32(0.0f);
+    #pragma omp parallel for
+    for (int i = 0; i < elem_num; i += 4) {
+        float32x4_t in_vec = vld1q_f32(&feature_in[i]);
+        float32x4_t result = vmaxq_f32(in_vec, zero);
+        vst1q_f32(&feature_in[i], result);
     }
-    return;
 }
 
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Linear input : float *feature_in
     // Linear output: float *feature_out
+    #pragma omp parallel for
     for (int out = 0; out < FC_OUT; out++) {
+        float32x4_t sum_vec = vdupq_n_f32(0.0f);
         float sum = bias[out];
-        for (int in = 0; in < FC_IN; in++) {
-            sum += feature_in[in] * weight[out * FC_IN + in];
+        for (int in = 0; in < FC_IN; in += 4) {
+            float32x4_t in_vec = vld1q_f32(&feature_in[in]);
+            float32x4_t w_vec = vld1q_f32(&weight[out * FC_IN + in]);
+            sum_vec = vmlaq_f32(sum_vec, in_vec, w_vec);
         }
+        sum += vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
         feature_out[out] = sum;
     }
-    return;
 }
 
 void Log_softmax(float *activation) {
@@ -370,15 +375,16 @@ int Get_pred(float *activation) {
     /*          PUT YOUR CODE HERE          */
     // Get_pred input : float *activation
     // Get_pred output: int pred
-
-    int pred = 0;
     float max_val = activation[0];
+    int pred = 0;
+
     for (int i = 1; i < CLASS; i++) {
         if (activation[i] > max_val) {
             max_val = activation[i];
             pred = i;
         }
     }
+
     return pred;
 }
 
@@ -386,12 +392,15 @@ void Get_CAM(float *activation, float *cam, int pred, float *weight) {
     /*          PUT YOUR CODE HERE          */
     // Get_CAM input : float *activation
     // Get_CAM output: float *cam
+    #pragma omp parallel for
     for (int h = 0; h < I3_H; h++) {
-        for (int w = 0; w < I3_W; w++) {
-            cam[h * I3_W + w] = activation[h * I3_W + w] * weight[pred * FC_IN + h * I3_W + w];
+        for (int w = 0; w < I3_W; w += 4) {
+            float32x4_t act_vec = vld1q_f32(&activation[h * I3_W + w]);
+            float32x4_t w_vec = vld1q_f32(&weight[pred * FC_IN + h * I3_W + w]);
+            float32x4_t cam_vec = vmulq_f32(act_vec, w_vec);
+            vst1q_f32(&cam[h * I3_W + w], cam_vec);
         }
     }
-    return;
 }
 
 void save_image(float *feature_scaled, float *cam) {
