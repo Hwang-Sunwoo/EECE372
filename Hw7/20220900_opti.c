@@ -506,7 +506,7 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
         "mul r9, r0, %[in_C]\n\t"
         "mul r9, r9, %[K]\n\t"
         "mul r9, r9, %[K]\n\t"  // r9 = oc * in_C * K * K
-        "mul r8, %[k], r3\n\t"
+        "mul r8, %[K], r3\n\t"
         "mul r8, r8, %[K]\n\t"
         "add r9, r9, r8\n\t"
         "mul r8, r4, %[K]\n\t"
