@@ -415,7 +415,7 @@ int Get_pred(float *activation) {
     );
     return pred;
 }
-
+/*
 void Get_CAM(float *activation, float *cam, int pred, float *weight) {
     /*          PUT YOUR CODE HERE          */
     // Get_CAM input : float *activation
@@ -433,7 +433,34 @@ void Get_CAM(float *activation, float *cam, int pred, float *weight) {
         }
     }
 }
+*/
+	void Get_CAM(float *activation, float *cam, int pred, float *weight) {
+    int num_threads = 6;  // 사용할 스레드 수 설정
+    omp_set_num_threads(num_threads);
 
+    #pragma omp parallel
+    {
+        int thread_id = omp_get_thread_num();
+        int total_threads = omp_get_num_threads();
+        int chunk_size = (I3_H + total_threads - 1) / total_threads;
+        int start = thread_id * chunk_size;
+        int end = (start + chunk_size > I3_H) ? I3_H : start + chunk_size;
+
+        for (int h = start; h < end; h++) {
+            for (int w = 0; w < I3_W; w += 4) {
+                // NEON 벡터 로드
+                float32x4_t act_vec = vld1q_f32(&activation[h * I3_W + w]);
+                float32x4_t w_vec = vld1q_f32(&weight[pred * FC_IN + h * I3_W + w]);
+                
+                // 벡터 곱셈
+                float32x4_t cam_vec = vmulq_f32(act_vec, w_vec);
+                
+                // 결과 저장
+                vst1q_f32(&cam[h * I3_W + w], cam_vec);
+            }
+        }
+    }
+}
 void save_image(float *feature_scaled, float *cam) {
     /*            DO NOT MODIFIY            */
     float *output = (float *)malloc(sizeof(float) * 3 * I1_H * I1_W);
