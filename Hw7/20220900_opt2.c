@@ -330,7 +330,7 @@ void ReLU(float *feature_in, int elem_num) {
         "cmp r3, #0\n\t"                // r3와 0을 비교
         "bge no_change\n\t"             // r3가 0보다 크거나 같으면 값을 변경하지 않음
 
-        "str #0, [r3]\n\t"  // r0 + r2 * 4에 r3를 저장 (변경된 배열 요소)
+        "mov #0, [r3]\n\t"  // r0 + r2 * 4에 r3를 저장 (변경된 배열 요소)
 
         "no_change:\n\t"
         "add r2, r2, #1\n\t"            // r2를 1 증가 (다음 인덱스로 이동)
