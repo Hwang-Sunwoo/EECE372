@@ -391,9 +391,9 @@ int Get_pred(float *activation) {
         "mov r1, #0\n\t"  // pred = 0
         "vld1.32 {d0}, [%[activation]]\n\t"  // max_val = activation[0]
         "mov r2, #1\n\t"  // i = 1
-        "ldr r3, =CLASS\n\t"  // r3 = CLASS
+	    
     "get_pred_loop_start:\n\t"
-        "cmp r2, r3\n\t"  // if (i >= CLASS) break
+        "cmp r2, %[CLASS]\n\t"  // if (i >= CLASS) break
         "bge get_pred_loop_end\n\t"
         "add r4, %[activation], r2, LSL #2\n\t"  // address of activation[i]
         "vld1.32 {d1}, [r4]\n\t"  // load activation[i]
