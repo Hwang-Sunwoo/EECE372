@@ -311,7 +311,7 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     for (int oc = 0; oc < out_C; oc++) {
         for (int oh = 0; oh < out_H; oh++) {
             for (int ow = 0; ow < out_W; ow++) {
-                float sum = bias[oc];
+                float32x4_t sum_vec = vdupq_n_f32(bias[oc]);
                 for (int ic = 0; ic < in_C; ic++) {
                     for (int kh = 0; kh < K; kh++) {
                         for (int kw = 0; kw < K; kw++) {
@@ -321,12 +321,11 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                             float *w_ptr = weight + oc * in_C * K * K + ic * K * K + kh * K + kw;
                             float32x4_t in_vec = vld1q_f32(in_ptr);
                             float32x4_t w_vec = vld1q_f32(w_ptr);
-                            float32x4_t sum_vec = vmulq_f32(in_vec, w_vec);
-                            sum += vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
+                            sum_vec = vmlaq_f32(sum_vec, in_vec, w_vec);
                         }
                     }
                 }
-                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum;
+                feature_out[oc * out_H * out_W + oh * out_W + ow] = vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
             }
         }
     }
