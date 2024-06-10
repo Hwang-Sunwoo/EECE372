@@ -318,13 +318,15 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     return;
 }
 
+#include <arm_neon.h>
+
 void ReLU(float *feature_in, int elem_num) {
     asm volatile (
         "stp x29, x30, [sp, #-16]! \n\t"
-        "add x29, sp, #0 \n\t"
+        "mov x29, sp \n\t"
 
         // Initialize NEON registers
-        "eor v0.16b, v0.16b, v0.16b \n\t" // Set v0 to zero vector
+        "movi v0.4s, #0 \n\t" // Set v0 to zero vector
 
         // Compute number of full 4-float vectors
         "lsr x2, %w1, #2 \n\t"           // x2 = elem_num / 4
