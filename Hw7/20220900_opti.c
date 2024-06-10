@@ -454,24 +454,26 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                             int ih = oh * S + kh;
                             int iw = ow * S + kw;
 
+                            int feature_idx = ic * in_H * in_W + ih * in_W + iw;
+                            int weight_idx = oc * in_C * K * K + ic * K * K + kh * K + kw;
+
                             asm volatile (
-                                "mov r0, %[feature_in]\n\t"
-                                "mov r1, %[weight]\n\t"
-                                "add r0, r0, %[ic_offset]\n\t"
-                                "add r0, r0, %[in_offset]\n\t"
-                                "vld1.32 {d0[0]}, [r0]\n\t"     // Load feature_in[ih * in_W + iw]
-                                "add r1, r1, %[oc_offset]\n\t"
-                                "add r1, r1, %[w_offset]\n\t"
-                                "vld1.32 {d1[0]}, [r1]\n\t"     // Load weight[oc * in_C * K * K + ic * K * K + kh * K + kw]
-                                "vmul.f32 d0, d0, d1\n\t"       // Multiply feature_in and weight
-                                "vadd.f32 %[sum], %[sum], d0[0]\n\t" // Add to sum
+                                // Load feature_in[ih * in_W + iw] into s0
+                                "add r0, %[feature_in], %[feature_idx], lsl #2\n\t"
+                                "vldr s0, [r0]\n\t"
+                                
+                                // Load weight[oc * in_C * K * K + ic * K * K + kh * K + kw] into s1
+                                "add r1, %[weight], %[weight_idx], lsl #2\n\t"
+                                "vldr s1, [r1]\n\t"
+                                
+                                // Multiply and accumulate
+                                "vmul.f32 s2, s0, s1\n\t"
+                                "vadd.f32 %P[sum], %P[sum], s2\n\t"
+                                
                                 : [sum] "+w" (sum)
                                 : [feature_in] "r" (feature_in), [weight] "r" (weight), 
-                                  [ic_offset] "r" (ic * in_H * in_W * sizeof(float)), 
-                                  [in_offset] "r" (ih * in_W + iw * sizeof(float)), 
-                                  [oc_offset] "r" (oc * in_C * K * K * sizeof(float)), 
-                                  [w_offset] "r" (ic * K * K + kh * K + kw * sizeof(float))
-                                : "r0", "r1", "d0", "d1", "memory"
+                                  [feature_idx] "r" (feature_idx), [weight_idx] "r" (weight_idx)
+                                : "r0", "r1", "s0", "s1", "s2", "memory"
                             );
                         }
                     }
@@ -481,6 +483,7 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
         }
     }
 }
+
 
 void ReLU(float *feature_in, int elem_num){
     /*          PUT YOUR CODE HERE          */
