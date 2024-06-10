@@ -318,33 +318,34 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     return;
 }
 void ReLU(float *feature_in, int elem_num) {
-
     asm(
-    "push {r4, r5, lr}\n\t"         // 프로로그: 레지스터와 스택 설정
-    "cmp r1, #0\n\t"                 // elem_num이 0인지 확인
-    "ble ReLU_end\n\t"               // elem_num이 0 이하이면 종료
+        "push {r4, lr}\n\t"             // 레지스터 r4와 lr을 스택에 푸시하여 저장
+        "mov r2, #0\n\t"                // r2를 0으로 초기화 (배열의 인덱스로 사용)
 
-    "mov r2, #0\n\t"                 // 인덱스 초기화 (0) i
+        "loop_start:\n\t"
+        "cmp r2, r1\n\t"                // r2와 r1을 비교 (현재 인덱스와 배열의 길이를 비교)
+        "beq loop_end\n\t"              // r2가 r1과 같으면 루프를 종료
 
-    "ReLU_loop:\n\t"                 // 루프 시작
-    "lsl r4, r2, #2\n\t"            // 현재 요소 주소 계산
-    "add r4, r0, r4\n\t"
-    "ldr r5, [r4]\n\t"              // 요소 값 로드
+        "ldr r3, [r0, r2, LSL #2]\n\t"  // r0 + r2 * 4에서 값을 로드하여 r3에 저장 (현재 배열 요소)
+        "cmp r3, #0\n\t"                // r3와 0을 비교
+        "bge no_change\n\t"             // r3가 0보다 크거나 같으면 값을 변경하지 않음
 
-    "cmp r5, #0\n\t"         // 0과 비교
-    "bge ReLU_skip\n\t"             // 음수인 경우 건너뜀
-    "mov r4, #0\n\t"           // 음수인 경우 0으로 설정
+        "mov r3, #0\n\t"                // r3를 0으로 설정
+        "str r3, [r0, r2, LSL #2]\n\t"  // r0 + r2 * 4에 r3를 저장 (변경된 배열 요소)
 
-    "ReLU_skip:\n\t"
-    "add r2, r2, #1\n\t"            // 인덱스 증가
-    "cmp r2, r1\n\t"                // 루프 조건 확인
-    "blt ReLU_loop\n\t"             // 조건이 만족되면 루프 반복
+        "no_change:\n\t"
+        "add r2, r2, #1\n\t"            // r2를 1 증가 (다음 인덱스로 이동)
+        "b loop_start\n\t"              // 루프 시작으로 돌아감
 
-    "ReLU_end:\n\t"                      // 에필로그: 레지스터와 스택 복원
-    "pop {r4, r5, lr}\n\t"
-    "bx lr\n\t"                     // 함수 종료 및 복귀
+        "loop_end:\n\t"
+        "pop {r4, lr}\n\t"              // 레지스터 r4와 lr을 스택에서 팝하여 복원
+        "bx lr\n\t"                     // lr로 복귀
+        :
+        : [feature_in] "r"(feature_in), [elem_num] "r"(elem_num)
+        : "r0", "r1", "r2", "r3", "r4", "memory"
     );
 }
+
 
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
