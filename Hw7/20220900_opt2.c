@@ -393,7 +393,7 @@ int Get_pred(float *activation) {
         "mov r2, #1\n\t"  // i = 1
 	    
     "get_pred_loop_start:\n\t"
-        "cmp r2, %[CLASS]\n\t"  // if (i >= CLASS) break
+        "cmp r2, %[class]\n\t"  // if (i >= CLASS) break
         "bge get_pred_loop_end\n\t"
         "add r4, %[activation], r2, LSL #2\n\t"  // address of activation[i]
         "vld1.32 {d1}, [r4]\n\t"  // load activation[i]
@@ -408,7 +408,7 @@ int Get_pred(float *activation) {
     "get_pred_loop_end:\n\t"
         "mov %[pred], r1\n\t"  // pred = r1
         : [pred] "=r" (pred)
-        : [activation] "r" (activation)
+        : [activation] "r" (activation), [class] "r" (CLASS)
         : "r1", "r2", "r3", "r4", "d0", "d1", "d2", "memory"
     );
     return pred;
