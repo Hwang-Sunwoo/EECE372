@@ -322,7 +322,7 @@ void ReLU(float *feature_in, int elem_num) {
     asm volatile (
 
         // Initialize NEON registers
-        "movi v0.4s, #0 \n\t" // Set v0 to zero vector
+        "movi r0.4s, #0 \n\t" // Set v0 to zero vector
 
         // Compute number of full 4-float vectors
         "lsr r2, %[num], #2 \n\t"           // x2 = elem_num / 4
@@ -331,21 +331,21 @@ void ReLU(float *feature_in, int elem_num) {
         // Loop through full 4-float vectors
         "cbz r2, 2f \n\t"                // If there are no full vectors, skip
         "1: \n\t"
-        "ld1 {v1.4s}, [%[in]], #16 \n\t"    // Load 4 floats into NEON register
-        "fcmge v2.4s, v1.4s, v0.4s \n\t" // Compare each float with zero
-        "bif v1.16b, v0.16b, v2.16b \n\t"// If less than zero, set to zero
-        "st1 {v1.4s}, [%[in]], #-16 \n\t"   // Store the result back to memory
+        "ld1 {r1.4s}, [%[in]], #16 \n\t"    // Load 4 floats into NEON register
+        "fcmge r4.4s, r1.4s, r0.4s \n\t" // Compare each float with zero
+        "bif r1.16b, r0.16b, r4.16b \n\t"// If less than zero, set to zero
+        "st1 {r1.4s}, [%[in]], #-16 \n\t"   // Store the result back to memory
         "subs r2, r2, #1 \n\t"           // Decrement loop counter and loop if not done
         "b.ne 1b \n\t"
 
         "2: \n\t"
         "cbz r3, 3f \n\t"                // If no remaining elements, skip
         "1: \n\t"
-        "ldr s1, [%[in]], #4 \n\t"          // Load one float into scalar register
-        "fcmp s1, s0 \n\t"               // Compare with zero
+        "ldr r5, [%[in]], #4 \n\t"          // Load one float into scalar register
+        "fcmp r5, s0 \n\t"               // Compare with zero
         "bge 2f \n\t"                    // If greater or equal, skip setting to zero
-        "mov w2, #0 \n\t"
-        "str w2, [%[in]], #-4 \n\t"
+        "mov r6, #0 \n\t"
+        "str r6, [%[in]], #-4 \n\t"
         "2: \n\t"
         "subs r3, r3, #1 \n\t"           // Decrement loop counter and loop if not done
         "b.ne 1b \n\t"
@@ -353,7 +353,7 @@ void ReLU(float *feature_in, int elem_num) {
         "3: \n\t"
         :
         : [in] "r"(feature_in), [num] "r"(elem_num)
-        : "r2", "r3", "v0", "v1", "v2", "s1", "w2"
+        : "r2", "r3", "r0", "r1", "r4", "r5", "r6"
     );
 }
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
