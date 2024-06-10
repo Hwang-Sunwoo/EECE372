@@ -392,30 +392,38 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     }
 }
 
-
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
-    /*          PUT YOUR CODE HERE          */
-    // Conv_2d input : float *feature_in
-    // Conv_2d output: float *feature_out
+    #pragma omp parallel for collapse(3)
     for (int oc = 0; oc < out_C; oc++) {
         for (int oh = 0; oh < out_H; oh++) {
             for (int ow = 0; ow < out_W; ow++) {
-                float sum = bias[oc];
+                float32x4_t sum_vec = vdupq_n_f32(0.0f);
+                float sum_scalar = bias[oc];
+                int ih_base = oh * S;
+                int iw_base = ow * S;
+
                 for (int ic = 0; ic < in_C; ic++) {
                     for (int kh = 0; kh < K; kh++) {
-                        for (int kw = 0; kw < K; kw++) {
-                            int ih = oh * S + kh;
-                            int iw = ow * S + kw;
-                            sum += feature_in[ic * in_H * in_W + ih * in_W + iw] * weight[oc * in_C * K * K + ic * K * K + kh * K + kw];
+                        for (int kw = 0; kw < K; kw += 4) {
+                            int ih = ih_base + kh;
+                            int iw = iw_base + kw;
+
+                            float32x4_t feature_vec = vld1q_f32(&feature_in[ic * in_H * in_W + ih * in_W + iw]);
+                            float32x4_t weight_vec = vld1q_f32(&weight[oc * in_C * K * K + ic * K * K + kh * K + kw]);
+                            
+                            sum_vec = vmlaq_f32(sum_vec, feature_vec, weight_vec);
                         }
                     }
                 }
-                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum;
+
+                // Sum the elements of the NEON vector
+                sum_scalar += vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
+                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum_scalar;
             }
         }
     }
-    return;
 }
+
 void ReLU(float *feature_in, int elem_num) {
     asm(
         "mov r2, #0\n\t"  // r2를 0으로 초기화 i
