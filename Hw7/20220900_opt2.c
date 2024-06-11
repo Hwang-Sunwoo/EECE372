@@ -274,91 +274,7 @@ void Normalized(unsigned char *feature_in, float *feature_out) {
 
     return;
 }
-/*
-void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
-    int padded_H = H + 2;
-    int padded_W = W + 2;
 
-    #pragma omp parallel for collapse(2)
-    for (int c = 0; c < C; c++) {
-        for (int h = 0; h < padded_H; h++) {
-            for (int w = 0; w < padded_W; w += 4) { // NEON: process 4 elements at a time
-                if (h == 0 || h == padded_H - 1 || w == 0 || w == padded_W - 1) {
-                    // Set 4 elements to 0 using NEON
-                    asm(
-                        // Calculate address: feature_out + (c * padded_H * padded_W + h * padded_W + w)
-                        "mul r0, %[c], %[padded_H]\n\t"
-                        "mul r0, r0, %[padded_W]\n\t"
-                        "mul r1, %[h], %[padded_W]\n\t"
-                        "add r0, r0, r1\n\t"
-                        "add r0, r0, %[w]\n\t"
-                        "lsl r0, r0, #2\n\t"
-                        "add r0, %[feature_out], r0\n\t"
-
-                        // Set 4 elements to 0
-                        "vmov.f32 q0, #0.0\n\t"
-                        "vst1.32 {q0}, [r0]\n\t"
-                        :
-                        : [feature_out] "r" (feature_out), [c] "r" (c), [h] "r" (h), [w] "r" (w), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
-                        : "r0", "r1", "q0", "memory"
-                    );
-                } else {
-                    // Load input values from feature_in and store in feature_out
-                    asm volatile (
-                        "mul r0, %[c], %[H]\n\t"
-                        "mul r0, r0, %[W]\n\t"
-                        "sub r1, %[h], #1\n\t"
-                        "mul r1, r1, %[W]\n\t"
-                        "add r0, r0, r1\n\t"
-                        "sub r1, %[w], #1\n\t"
-                        "add r1, r1, r0\n\t"
-                        "lsl r1, r1, #2\n\t"
-                        "add r1, %[feature_in], r1\n\t"
-                        "ldr r1, [r1]\n\t" // Load input values
-
-                        // Calculate address: feature_out + (c * padded_H * padded_W + h * padded_W + w)
-                        "mul r0, %[c], %[padded_H]\n\t"
-                        "mul r0, r0, %[padded_W]\n\t"
-                        "mul r1, %[h], %[padded_W]\n\t"
-                        "add r0, r0, r1\n\t"
-                        "add r0, r0, %[w]\n\t"
-                        "lsl r0, r0, #2\n\t"
-                        "add r0, %[feature_out], r0\n\t"
-
-                        "vst1.32 {q0}, [r0]\n\t" // Store 4 values to feature_out
-                        :
-                        : [feature_in] "r" (feature_in), [feature_out] "r" (feature_out), [c] "r" (c), [h] "r" (h), [w] "r" (w), [H] "r" (H), [W] "r" (W), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
-                        : "r0", "r1", "q0", "memory"
-                    );
-                }
-            }
-        }
-    }
-}
-*/
-/*
-void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
-    int padded_H = H + 2;
-    int padded_W = W + 2;
-
-    #pragma omp parallel for collapse(3)
-    for (int c = 0; c < C; c++) {
-        for (int h = 0; h < padded_H; h++) {
-            for (int w = 0; w < padded_W; w += 4) {
-                if (h == 0 || h == padded_H - 1 || w == 0 || w >= padded_W - 4) {
-                    // 네온을 사용하여 4개의 요소를 0으로 설정
-                    float32x4_t zero_vec = vdupq_n_f32(0.0);
-                    vst1q_f32(&feature_out[c * padded_H * padded_W + h * padded_W + w], zero_vec);
-                } else {
-                    // feature_in에서 값을 로드하고 feature_out에 저장
-                    float32x4_t input_vec = vld1q_f32(&feature_in[c * H * W + (h - 1) * W + (w - 1)]);
-                    vst1q_f32(&feature_out[c * padded_H * padded_W + h * padded_W + w], input_vec);
-                }
-            }
-        }
-    }
-}
-*/
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     int padded_H = H + 2;
     int padded_W = W + 2;
@@ -450,48 +366,7 @@ void ReLU(float *feature_in, int elem_num) {
         : [feature_in] "r"(feature_in), [elem_num] "r"(elem_num)
         : "r2", "r3", "memory"
     );
-}/*
-void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
-    int fc_in = FC_IN;  // 매크로를 상수로 변환
-
-    for (int out = 0; out < FC_OUT; out++) {
-        float sum = bias[out];
-
-        asm volatile (
-            "vmov.f32 s0, %[bias_out] \n\t"        // Move bias[out] to s0 (sum)
-            "mov r4, #0 \n\t"                      // Initialize inner loop index (in = 0)
-
-            "1: \n\t"                              // Inner loop label
-            "cmp r4, %[fc_in] \n\t"                // Compare in with FC_IN
-            "bge 2f \n\t"                          // Break if in >= FC_IN
-
-            "add r5, %[feature_in], r4, LSL #2 \n\t" // Calculate feature_in[in] address
-            "vldr.32 s1, [r5] \n\t"                // Load feature_in[in] into s1
-
-            "mul r6, %[out], %[fc_in] \n\t"        // Calculate base index for weight (weight + out * FC_IN)
-            "add r6, r6, r4 \n\t"                  // Add in to the base index
-            "lsl r6, r6, #2 \n\t"                  // Multiply index by 4 to get byte offset
-            "add r6, %[weight], r6 \n\t"           // Calculate weight[out * FC_IN + in] address
-            "vldr.32 s2, [r6] \n\t"                // Load weight[out * FC_IN + in] into s2
-
-            "vmul.f32 s3, s1, s2 \n\t"             // Multiply feature_in[in] * weight[out * FC_IN + in]
-            "vadd.f32 s0, s0, s3 \n\t"             // Add the result to sum
-
-            "add r4, r4, #1 \n\t"                  // Increment inner loop index (in++)
-            "b 1b \n\t"                            // Repeat inner loop
-
-            "2: \n\t"                              // Inner loop end label
-            "vmov %[sum], s0 \n\t"                 // Move sum back to C variable
-
-            : [sum] "=r" (sum)                     // Output operands
-            : [bias_out] "r" (bias[out]), [feature_in] "r" (feature_in), [weight] "r" (weight), [out] "r" (out), [fc_in] "r" (fc_in)
-            : "r4", "r5", "r6", "s0", "s1", "s2", "s3", "memory"  // Clobbered registers
-        );
-
-        feature_out[out] = sum;
-    }
 }
-*/
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Linear input : float *feature_in
@@ -630,3 +505,130 @@ void display_sev_seg(int pred){
 	for(int i = 0; i < 8; i++)	
 	digitalWrite(SEGMENT_PINS[i], sev_seg[pred][i]);
 }
+/*
+void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
+    int padded_H = H + 2;
+    int padded_W = W + 2;
+
+    #pragma omp parallel for collapse(2)
+    for (int c = 0; c < C; c++) {
+        for (int h = 0; h < padded_H; h++) {
+            for (int w = 0; w < padded_W; w += 4) { // NEON: process 4 elements at a time
+                if (h == 0 || h == padded_H - 1 || w == 0 || w == padded_W - 1) {
+                    // Set 4 elements to 0 using NEON
+                    asm(
+                        // Calculate address: feature_out + (c * padded_H * padded_W + h * padded_W + w)
+                        "mul r0, %[c], %[padded_H]\n\t"
+                        "mul r0, r0, %[padded_W]\n\t"
+                        "mul r1, %[h], %[padded_W]\n\t"
+                        "add r0, r0, r1\n\t"
+                        "add r0, r0, %[w]\n\t"
+                        "lsl r0, r0, #2\n\t"
+                        "add r0, %[feature_out], r0\n\t"
+
+                        // Set 4 elements to 0
+                        "vmov.f32 q0, #0.0\n\t"
+                        "vst1.32 {q0}, [r0]\n\t"
+                        :
+                        : [feature_out] "r" (feature_out), [c] "r" (c), [h] "r" (h), [w] "r" (w), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
+                        : "r0", "r1", "q0", "memory"
+                    );
+                } else {
+                    // Load input values from feature_in and store in feature_out
+                    asm volatile (
+                        "mul r0, %[c], %[H]\n\t"
+                        "mul r0, r0, %[W]\n\t"
+                        "sub r1, %[h], #1\n\t"
+                        "mul r1, r1, %[W]\n\t"
+                        "add r0, r0, r1\n\t"
+                        "sub r1, %[w], #1\n\t"
+                        "add r1, r1, r0\n\t"
+                        "lsl r1, r1, #2\n\t"
+                        "add r1, %[feature_in], r1\n\t"
+                        "ldr r1, [r1]\n\t" // Load input values
+
+                        // Calculate address: feature_out + (c * padded_H * padded_W + h * padded_W + w)
+                        "mul r0, %[c], %[padded_H]\n\t"
+                        "mul r0, r0, %[padded_W]\n\t"
+                        "mul r1, %[h], %[padded_W]\n\t"
+                        "add r0, r0, r1\n\t"
+                        "add r0, r0, %[w]\n\t"
+                        "lsl r0, r0, #2\n\t"
+                        "add r0, %[feature_out], r0\n\t"
+
+                        "vst1.32 {q0}, [r0]\n\t" // Store 4 values to feature_out
+                        :
+                        : [feature_in] "r" (feature_in), [feature_out] "r" (feature_out), [c] "r" (c), [h] "r" (h), [w] "r" (w), [H] "r" (H), [W] "r" (W), [padded_H] "r" (padded_H), [padded_W] "r" (padded_W)
+                        : "r0", "r1", "q0", "memory"
+                    );
+                }
+            }
+        }
+    }
+}
+*/
+/*
+void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
+    int padded_H = H + 2;
+    int padded_W = W + 2;
+
+    #pragma omp parallel for collapse(3)
+    for (int c = 0; c < C; c++) {
+        for (int h = 0; h < padded_H; h++) {
+            for (int w = 0; w < padded_W; w += 4) {
+                if (h == 0 || h == padded_H - 1 || w == 0 || w >= padded_W - 4) {
+                    // 네온을 사용하여 4개의 요소를 0으로 설정
+                    float32x4_t zero_vec = vdupq_n_f32(0.0);
+                    vst1q_f32(&feature_out[c * padded_H * padded_W + h * padded_W + w], zero_vec);
+                } else {
+                    // feature_in에서 값을 로드하고 feature_out에 저장
+                    float32x4_t input_vec = vld1q_f32(&feature_in[c * H * W + (h - 1) * W + (w - 1)]);
+                    vst1q_f32(&feature_out[c * padded_H * padded_W + h * padded_W + w], input_vec);
+                }
+            }
+        }
+    }
+}
+*/
+/*
+void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
+    int fc_in = FC_IN;  // 매크로를 상수로 변환
+
+    for (int out = 0; out < FC_OUT; out++) {
+        float sum = bias[out];
+
+        asm volatile (
+            "vmov.f32 s0, %[bias_out] \n\t"        // Move bias[out] to s0 (sum)
+            "mov r4, #0 \n\t"                      // Initialize inner loop index (in = 0)
+
+            "1: \n\t"                              // Inner loop label
+            "cmp r4, %[fc_in] \n\t"                // Compare in with FC_IN
+            "bge 2f \n\t"                          // Break if in >= FC_IN
+
+            "add r5, %[feature_in], r4, LSL #2 \n\t" // Calculate feature_in[in] address
+            "vldr.32 s1, [r5] \n\t"                // Load feature_in[in] into s1
+
+            "mul r6, %[out], %[fc_in] \n\t"        // Calculate base index for weight (weight + out * FC_IN)
+            "add r6, r6, r4 \n\t"                  // Add in to the base index
+            "lsl r6, r6, #2 \n\t"                  // Multiply index by 4 to get byte offset
+            "add r6, %[weight], r6 \n\t"           // Calculate weight[out * FC_IN + in] address
+            "vldr.32 s2, [r6] \n\t"                // Load weight[out * FC_IN + in] into s2
+
+            "vmul.f32 s3, s1, s2 \n\t"             // Multiply feature_in[in] * weight[out * FC_IN + in]
+            "vadd.f32 s0, s0, s3 \n\t"             // Add the result to sum
+
+            "add r4, r4, #1 \n\t"                  // Increment inner loop index (in++)
+            "b 1b \n\t"                            // Repeat inner loop
+
+            "2: \n\t"                              // Inner loop end label
+            "vmov %[sum], s0 \n\t"                 // Move sum back to C variable
+
+            : [sum] "=r" (sum)                     // Output operands
+            : [bias_out] "r" (bias[out]), [feature_in] "r" (feature_in), [weight] "r" (weight), [out] "r" (out), [fc_in] "r" (fc_in)
+            : "r4", "r5", "r6", "s0", "s1", "s2", "s3", "memory"  // Clobbered registers
+        );
+
+        feature_out[out] = sum;
+    }
+}
+*/
