@@ -375,18 +375,16 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                             int ih = ih_base + kh;
                             int iw = iw_base + kw;
 
+                            float feature_val = feature_in[ic * in_H * in_W + ih * in_W + iw];
+                            float weight_val = weight[oc * in_C * K * K + ic * K * K + kh * K + kw];
                             asm volatile (
-                                "vldr.32 s0, [%[feature_in], %[offset_in], LSL #2] \n\t"  // Load feature_in[ic * in_H * in_W + ih * in_W + iw]
-                                "vldr.32 s1, [%[weight], %[offset_wt], LSL #2] \n\t"     // Load weight[oc * in_C * K * K + ic * K * K + kh * K + kw]
-                                "vmul.f32 s2, s0, s1 \n\t"                               // Multiply
-                                "vadd.f32 %q[sum], %q[sum], s2 \n\t"                    // Add to sum_scalar
-                                :
-                                : [feature_in] "r" (feature_in),
-                                  [weight] "r" (weight),
-                                  [offset_in] "r" (ic * in_H * in_W + ih * in_W + iw),
-                                  [offset_wt] "r" (oc * in_C * K * K + ic * K * K + kh * K + kw),
-                                  [sum] "w" (sum_scalar)
-                                : "s0", "s1", "s2"
+                                "vmov.f32 s0, %1 \n\t"  // Move feature_val into s0
+                                "vmov.f32 s1, %2 \n\t"  // Move weight_val into s1
+                                "vmul.f32 s2, s0, s1 \n\t"  // Multiply feature_val and weight_val
+                                "vadd.f32 %0, %0, s2 \n\t"  // Add the result to sum_scalar
+                                : "+w" (sum_scalar)         // Output operand
+                                : "r" (feature_val), "r" (weight_val) // Input operands
+                                : "s0", "s1", "s2"            // Clobbered registers
                             );
                         }
                     }
@@ -399,6 +397,7 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
         }
     }
 }
+
 
 void ReLU(float *feature_in, int elem_num) {
     asm(
