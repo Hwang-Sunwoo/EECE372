@@ -399,7 +399,8 @@ void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     }
 }
 
-void Log_softmax(float *activation) {
+void Log_softmax(float* activation) {
+    /*            DO NOT MODIFIY            */
     double max = activation[0];
     double sum = 0.0;
 
@@ -418,11 +419,6 @@ void Log_softmax(float *activation) {
         activation[i] = log(activation[i] / sum);
     }
 
-    // 디버깅용 출력
-    printf("Log softmax value\n");
-    for (int i = 0; i < CLASS; i++) {
-        printf("%2d: %6.3f\n", i, activation[i]);
-    }
     return;
 }
 
