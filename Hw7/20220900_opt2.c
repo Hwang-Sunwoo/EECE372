@@ -459,32 +459,35 @@ void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
         asm volatile(
             "mov r0, %[feature_in]\n\t"
             "mov r1, %[weight]\n\t"
-            "vmov s0, %[sum]\n\t"        // Load sum into NEON register s0
-            "mov r2, #0\n\t"             // Initialize loop counter
+            "vmov.f32 s0, %[sum]\n\t"        // Load sum into NEON register s0
+            "mov r2, #0\n\t"                 // Initialize loop counter
+            "veor q2, q2, q2\n\t"            // Clear q2 register
 
         "1:\n\t"
-            "vld1.32 {q0}, [r0]!\n\t"   // Load 4 elements from feature_in
-            "vld1.32 {q1}, [r1]!\n\t"   // Load 4 elements from weight
-            "vmla.f32 q2, q0, q1\n\t"   // Multiply and accumulate
-            "add r2, r2, #4\n\t"        // Increment loop counter by 4
-            "cmp r2, %[in_size]\n\t"    // Compare loop counter with FC_IN
+            "vld1.32 {q0}, [r0]!\n\t"       // Load 4 elements from feature_in
+            "vld1.32 {q1}, [r1]!\n\t"       // Load 4 elements from weight
+            "vmla.f32 q2, q0, q1\n\t"       // Multiply and accumulate
+            "add r2, r2, #4\n\t"            // Increment loop counter by 4
+            "cmp r2, %[in_size]\n\t"        // Compare loop counter with FC_IN
             "blt 1b\n\t"
 
-            "vpadd.f32 d0, d4, d5\n\t"  // Pairwise add
-            "vpadd.f32 d0, d0, d0\n\t"  // Pairwise add
-            "vadd.f32 s0, s0, s0[0]\n\t"  // Add the accumulated sum to s0
+            "vpadd.f32 d4, d4, d5\n\t"      // Pairwise add
+            "vpadd.f32 d4, d4, d4\n\t"      // Pairwise add
 
-            "vmov %[sum], s0\n\t"       // Move the result back to sum
+            "vadd.f32 s0, s0, s4[0]\n\t"    // Add the accumulated sum to s0
+
+            "vmov.f32 %[sum], s0\n\t"       // Move the result back to sum
 
             : [sum] "+w" (sum)
             : [feature_in] "r" (feature_in), [weight] "r" (weight + out * FC_IN), [in_size] "r" (FC_IN)
-            : "r0", "r1", "r2", "q0", "q1", "q2", "memory"
+            : "r0", "r1", "r2", "q0", "q1", "q2", "d4", "memory"
         );
 
         feature_out[out] = sum;
     }
     return;
 }
+
 void Log_softmax(float *activation) {
     /*            DO NOT MODIFIY            */
     double max = activation[0];
