@@ -142,7 +142,8 @@ int main(int argc, char *argv[]) {
 					fread(fbuf, sizeof(char), sizeof(fbuf),fp);
 					write(fd, fbuf, sizeof(fbuf));
 				}
-				fclose(fp);		
+				fclose(fp);	
+				break;
 			}
 
 		}
