@@ -100,54 +100,53 @@ int main(int argc, char *argv[]) {
         /*          PUT YOUR CODE HERE                      */
         /*          Serial communication                    */
         int fd;
-        struct termios newtio;
-        char fbuf[1024];
-        char buf[256];
+	struct termios newtio;
+	char fbuf[1024];
+	char buf[256];
 
-        fd = open("/dev/serial0", O_RDWR | O_NOCTTY);
-        if (fd < 0) {
-            fprintf(stderr, "failed to open port: %s.\r\n", strerror(errno));
-            printf("Make sure you are executing in sudo.\r\n");
-            exit(1);
-        }
-        usleep(250000);
+	fd = open("/dev/serial0", O_RDWR|O_NOCTTY);
+	if(fd<0) {
+		fprintf(stderr, "failed to open port: %s.\r\n", strerror(errno));
+		printf("Make sure you are executing in sudo.\r\n");
+	}
+	usleep(250000);
 
         memset(&newtio, 0, sizeof(newtio));
-        newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
-        newtio.c_iflag = ICRNL;
-        newtio.c_oflag = 0;
-        newtio.c_lflag = 0;
-        newtio.c_cc[VTIME] = 0;
-        newtio.c_cc[VMIN] = 1;
+	newtio.c_cflag = BAUDRATE|CS8|CLOCAL|CREAD;
+	newtio.c_iflag = ICRNL;
+	newtio.c_oflag = 0;
+	newtio.c_lflag = 0;
+	newtio.c_cc[VTIME] = 0;
+	newtio.c_cc[VMIN] = 1;
 
         tcflush(fd, TCIFLUSH);
-        tcsetattr(fd, TCSANOW, &newtio);
+	tcsetattr(fd, TCSANOW, &newtio);
 
-        while(1){
-        // Read from serial until 'c' or 'C' is received
-        int cnt = read(fd, buf, sizeof(buf));
-        buf[cnt] = '\0';
+        while(1) {
+		// Insert your code
+		memset(fbuf, 0, sizeof(fbuf));
+		int cnt = read(fd, buf, sizeof(buf));
+		buf[cnt] = '\0';
 
-            if (buf[0] == 'c' || buf[0] == 'C') {
-                system("libcamera-still -e bmp --width 280 --height 280 -t 20000 -o image.bmp");
-                file = "image.bmp";
-                
-                // Send the captured image via serial
-                FILE *fp = fopen("image.bmp", "rb");
-                if (fp == NULL) {
-                    fprintf(stderr, "failed to open image file: %s.\r\n", strerror(errno));
-                    exit(1);
-                }
+		if(cnt > 0){
+			if(buf[0] == 'c' || buf[0] == 'C'){
+				system("libcamera-still --width 640 --height 480 -o image.jpg");
+			
+				FILE *fp = fopen("image.jpg", "rb");
+				if(fp == NULL){
+					fprintf(stderr, "failed to open image file: %s.\r\n", strerror(errno));
+					continue;
+				}
+				
+				while(!(feof(fp))){
+					fread(fbuf, sizeof(char), sizeof(fbuf),fp);
+					write(fd, fbuf, sizeof(fbuf));
+				}
+				fclose(fp);		
+			}
 
-                while (!feof(fp)) {
-                    size_t bytesRead = fread(fbuf, sizeof(char), sizeof(fbuf), fp);
-                    write(fd, fbuf, bytesRead);
-                }
-                fclose(fp);
-                
-                break;
-            } 
-        }
+		}
+	}
         close(fd);
     }
     else if (atoi(argv[1]) == 1) {
