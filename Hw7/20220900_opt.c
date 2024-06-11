@@ -307,7 +307,6 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         }
     }
 }
-/*
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     #pragma omp parallel for collapse(3)
     for (int oc = 0; oc < out_C; oc++) {
@@ -330,47 +329,6 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                             
                             sum_vec = vmlaq_f32(sum_vec, feature_vec, weight_vec);
                         }
-                        // 처리되지 않은 나머지 요소를 수동으로 처리
-                        for (; kw < K; kw++) {
-                            int ih = ih_base + kh;
-                            int iw = iw_base + kw;
-                            sum_scalar += feature_in[ic * in_H * in_W + ih * in_W + iw] * weight[oc * in_C * K * K + ic * K * K + kh * K + kw];
-                        }
-                    }
-                }
-
-                // Sum the elements of the NEON vector
-                sum_scalar += vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
-                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum_scalar;
-            }
-        }
-    }
-}
-*/
-
-void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
-    #pragma omp parallel for collapse(3)
-    for (int oc = 0; oc < out_C; oc++) {
-        for (int oh = 0; oh < out_H; oh++) {
-            for (int ow = 0; ow < out_W; ow++) {
-                float32x4_t sum_vec = vdupq_n_f32(0.0f);
-                float sum_scalar = bias[oc];
-                int ih_base = oh * S;
-                int iw_base = ow * S;
-
-                for (int ic = 0; ic < in_C; ic++) {
-                    for (int kh = 0; kh < K; kh++) {
-                        int kw;
-                        for (kw = 0; kw <= K - 4; kw += 4) {
-                            int ih = ih_base + kh;
-                            int iw = iw_base + kw;
-
-                            float32x4_t feature_vec = vld1q_f32(&feature_in[ic * in_H * in_W + ih * in_W + iw]);
-                            float32x4_t weight_vec = vld1q_f32(&weight[oc * in_C * K * K + ic * K * K + kh * K + kw]);
-                            
-                            sum_vec = vmlaq_f32(sum_vec, feature_vec, weight_vec);
-                        }
-                        // 처리되지 않은 나머지 요소를 인라인 어셈블리어로 처리
                         for (; kw < K; kw++) {
                             int ih = ih_base + kh;
                             int iw = iw_base + kw;
@@ -397,8 +355,6 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
         }
     }
 }
-
-
 void ReLU(float *feature_in, int elem_num) {
     asm(
         "mov r2, #0\n\t"  // r2를 0으로 초기화 i
@@ -629,11 +585,9 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         for (int h = 0; h < padded_H; h++) {
             for (int w = 0; w < padded_W; w += 4) {
                 if (h == 0 || h == padded_H - 1 || w == 0 || w >= padded_W - 4) {
-                    // 네온을 사용하여 4개의 요소를 0으로 설정
                     float32x4_t zero_vec = vdupq_n_f32(0.0);
                     vst1q_f32(&feature_out[c * padded_H * padded_W + h * padded_W + w], zero_vec);
                 } else {
-                    // feature_in에서 값을 로드하고 feature_out에 저장
                     float32x4_t input_vec = vld1q_f32(&feature_in[c * H * W + (h - 1) * W + (w - 1)]);
                     vst1q_f32(&feature_out[c * padded_H * padded_W + h * padded_W + w], input_vec);
                 }
@@ -644,7 +598,7 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
 */
 /*
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
-    int fc_in = FC_IN;  // 매크로를 상수로 변환
+    int fc_in = FC_IN;  
 
     for (int out = 0; out < FC_OUT; out++) {
         float sum = bias[out];
@@ -681,6 +635,45 @@ void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
         );
 
         feature_out[out] = sum;
+    }
+}
+*/
+/*
+void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
+    #pragma omp parallel for collapse(3)
+    for (int oc = 0; oc < out_C; oc++) {
+        for (int oh = 0; oh < out_H; oh++) {
+            for (int ow = 0; ow < out_W; ow++) {
+                float32x4_t sum_vec = vdupq_n_f32(0.0f);
+                float sum_scalar = bias[oc];
+                int ih_base = oh * S;
+                int iw_base = ow * S;
+
+                for (int ic = 0; ic < in_C; ic++) {
+                    for (int kh = 0; kh < K; kh++) {
+                        int kw;
+                        for (kw = 0; kw <= K - 4; kw += 4) {
+                            int ih = ih_base + kh;
+                            int iw = iw_base + kw;
+
+                            float32x4_t feature_vec = vld1q_f32(&feature_in[ic * in_H * in_W + ih * in_W + iw]);
+                            float32x4_t weight_vec = vld1q_f32(&weight[oc * in_C * K * K + ic * K * K + kh * K + kw]);
+                            
+                            sum_vec = vmlaq_f32(sum_vec, feature_vec, weight_vec);
+                        }
+                        for (; kw < K; kw++) {
+                            int ih = ih_base + kh;
+                            int iw = iw_base + kw;
+                            sum_scalar += feature_in[ic * in_H * in_W + ih * in_W + iw] * weight[oc * in_C * K * K + ic * K * K + kh * K + kw];
+                        }
+                    }
+                }
+
+                // Sum the elements of the NEON vector
+                sum_scalar += vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
+                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum_scalar;
+            }
+        }
     }
 }
 */
