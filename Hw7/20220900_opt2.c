@@ -453,10 +453,11 @@ void ReLU(float *feature_in, int elem_num) {
 }
 
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
-    int fc_in = FC_IN;  // 매크로를 상수로 변환
+    int fc_in = FC_IN;
+    int fc_out = FC_OUT;
 
     #pragma omp parallel for
-    for (int out = 0; out < FC_OUT; out++) {
+    for (int out = 0; out < fc_out; out++) {
         float sum = bias[out];
 
         asm volatile (
@@ -493,6 +494,7 @@ void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
         feature_out[out] = sum;
     }
 }
+
 /*
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
