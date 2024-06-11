@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
             if (buf[0] == 'c' || buf[0] == 'C') {
                 system("libcamera-still -e bmp --width 280 --height 280 -t 20000 -o image.bmp");
                 file = "image.bmp";
-                /*
+                
                 // Send the captured image via serial
                 FILE *fp = fopen("image.bmp", "rb");
                 if (fp == NULL) {
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
                     write(fd, fbuf, bytesRead);
                 }
                 fclose(fp);
-                */
+                
                 break;
             } 
         }
