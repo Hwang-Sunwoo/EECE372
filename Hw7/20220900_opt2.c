@@ -452,28 +452,40 @@ void ReLU(float *feature_in, int elem_num) {
     );
 }
 
-
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
-    /*          PUT YOUR CODE HERE          */
-    // Linear input : float *feature_in
-    // Linear output: float *feature_out
-
-    #pragma omp parallel for
     for (int out = 0; out < FC_OUT; out++) {
-        float32x4_t sum_vec = vdupq_n_f32(0.0f);
-        for (int in = 0; in < FC_IN; in += 4) {
-            float32x4_t in_vec = vld1q_f32(&feature_in[in]);
-            float32x4_t w_vec = vld1q_f32(&weight[out * FC_IN + in]);
-            sum_vec = vmlaq_f32(sum_vec, in_vec, w_vec);
-        }
+        float sum = bias[out];
+        asm volatile (
+            "vmov.f32 s0, %1 \n\t"                   // Move bias[out] to s0 (sum)
+            "mov r8, #0 \n\t"                        // Initialize inner loop index (in = 0)
+            "mov r9, %[weight] \n\t"                 // Load weight pointer to r9
+            "add r9, r9, %[out], LSL #2 \n\t"        // Calculate base index for weight (weight + out * FC_IN * 4)
+            "mul r9, r9, %[FC_IN] \n\t"
 
-        // Sum the elements of the sum_vec vector
-        float sum = vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
+            "1: \n\t"                                // Inner loop label
+            "cmp r8, %[FC_IN] \n\t"                  // Compare in with FC_IN
+            "bge 2f \n\t"                            // Break if in >= FC_IN
 
-        // Add the bias
-        feature_out[out] = sum + bias[out];
+            "vld1.32 {d1[0]}, [%[feature_in], r8, LSL #2] \n\t"  // Load feature_in[in] into d1[0]
+            "vld1.32 {d2[0]}, [r9, r8, LSL #2] \n\t"  // Load weight[out * FC_IN + in] into d2[0]
+
+            "vmul.f32 s3, s1, s2 \n\t"               // Multiply feature_in[in] * weight[out * FC_IN + in]
+            "vadd.f32 s0, s0, s3 \n\t"               // Add the result to sum
+
+            "add r8, r8, #1 \n\t"                    // Increment inner loop index (in++)
+            "b 1b \n\t"                              // Repeat inner loop
+
+            "2: \n\t"                                // Inner loop end label
+            "vmov %0, s0 \n\t"                       // Move sum back to C variable
+
+            : "=r" (sum)                             // Output operands
+            : "r" (bias[out]), [feature_in] "r" (feature_in), [weight] "r" (weight), [out] "r" (out), [FC_IN] "r" (FC_IN)
+            : "r8", "r9", "d1", "d2", "s0", "s1", "s2", "s3", "memory"  // Clobbered registers
+        );
+        feature_out[out] = sum;
     }
 }
+
 
 
 void Log_softmax(float *activation) {
