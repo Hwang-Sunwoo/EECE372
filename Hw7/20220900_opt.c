@@ -98,7 +98,6 @@ int main(int argc, char *argv[]) {
     char *file;
    
     if (atoi(argv[1]) == 0) {
-    /* 시리얼 통신 초기화 */
     int fd;
     struct termios newtio;
     char fbuf[1024];
@@ -106,8 +105,8 @@ int main(int argc, char *argv[]) {
 
     fd = open("/dev/serial0", O_RDWR | O_NOCTTY);
     if (fd < 0) {
-        fprintf(stderr, "포트를 여는데 실패했습니다: %s.\r\n", strerror(errno));
-        printf("sudo 권한으로 실행하고 있는지 확인하세요.\r\n");
+        fprintf(stderr, "fail to open port: %s.\r\n", strerror(errno));
+        printf("check sudo.\r\n");
         exit(1);
     }
     usleep(250000);
