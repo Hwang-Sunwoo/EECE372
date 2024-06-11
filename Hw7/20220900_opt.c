@@ -200,6 +200,11 @@ int main(int argc, char *argv[]) {
 
     Log_softmax(fc_out);
 
+    printf("Log softmax value\n");
+    for (int i = 0; i < CLASS; i++) {
+        printf("%2d: %6.3f\n", i, fc_out[i]);
+    }
+	
     start2 = clock();
     pred = Get_pred(fc_out);
     Get_CAM(feature_conv2_out, cam, pred, net.fc_weight);
@@ -220,10 +225,7 @@ int main(int argc, char *argv[]) {
 
     display_sev_seg(pred);
     
-    printf("Log softmax value\n");
-    for (int i = 0; i < CLASS; i++) {
-        printf("%2d: %6.3f\n", i, fc_out[i]);
-    }
+    
     printf("Prediction: %d\n", pred);
     printf("Execution time: %9.3lf[us]\n", (double)(end1 + end2) / CLOCKS_PER_US);
 
