@@ -359,7 +359,8 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
 
                 for (int ic = 0; ic < in_C; ic++) {
                     for (int kh = 0; kh < K; kh++) {
-                        for (int kw = 0; kw <= K - 4; kw += 4) {
+                        int kw;
+                        for (kw = 0; kw <= K - 4; kw += 4) {
                             int ih = ih_base + kh;
                             int iw = iw_base + kw;
 
@@ -368,11 +369,24 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                             
                             sum_vec = vmlaq_f32(sum_vec, feature_vec, weight_vec);
                         }
-                        // 처리되지 않은 나머지 요소를 수동으로 처리
-                        for (int kw = K - (K % 4); kw < K; kw++) {
+                        // 처리되지 않은 나머지 요소를 인라인 어셈블리어로 처리
+                        for (; kw < K; kw++) {
                             int ih = ih_base + kh;
                             int iw = iw_base + kw;
-                            sum_scalar += feature_in[ic * in_H * in_W + ih * in_W + iw] * weight[oc * in_C * K * K + ic * K * K + kh * K + kw];
+
+                            asm volatile (
+                                "vldr.32 s0, [%[feature_in], %[offset_in]] \n\t"  // Load feature_in[ic * in_H * in_W + ih * in_W + iw]
+                                "vldr.32 s1, [%[weight], %[offset_wt]] \n\t"     // Load weight[oc * in_C * K * K + ic * K * K + kh * K + kw]
+                                "vmul.f32 s2, s0, s1 \n\t"                        // Multiply
+                                "vadd.f32 %q[sum], %q[sum], s2 \n\t"             // Add to sum_scalar
+                                :
+                                : [feature_in] "r" (&feature_in[ic * in_H * in_W + ih * in_W + iw]),
+                                  [weight] "r" (&weight[oc * in_C * K * K + ic * K * K + kh * K + kw]),
+                                  [offset_in] "r" (0),
+                                  [offset_wt] "r" (0),
+                                  [sum] "w" (sum_scalar)
+                                : "s0", "s1", "s2"
+                            );
                         }
                     }
                 }
