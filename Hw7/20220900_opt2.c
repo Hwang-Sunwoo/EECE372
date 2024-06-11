@@ -455,37 +455,36 @@ void ReLU(float *feature_in, int elem_num) {
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     for (int out = 0; out < FC_OUT; out++) {
         float sum = bias[out];
-        
+
         asm volatile(
             "mov r0, %[feature_in]\n\t"
             "mov r1, %[weight]\n\t"
-            "mov r2, %[sum]\n\t"
-            "mov r3, %[in_size]\n\t"
-            "mov r4, #0\n\t"
+            "vmov s0, %[sum]\n\t"        // Load sum into NEON register s0
+            "mov r2, #0\n\t"             // Initialize loop counter
 
         "1:\n\t"
             "vld1.32 {q0}, [r0]!\n\t"   // Load 4 elements from feature_in
             "vld1.32 {q1}, [r1]!\n\t"   // Load 4 elements from weight
             "vmla.f32 q2, q0, q1\n\t"   // Multiply and accumulate
-            "add r4, r4, #4\n\t"        // Increment loop counter by 4
-            "cmp r4, r3\n\t"
+            "add r2, r2, #4\n\t"        // Increment loop counter by 4
+            "cmp r2, %[in_size]\n\t"    // Compare loop counter with FC_IN
             "blt 1b\n\t"
 
             "vpadd.f32 d0, d4, d5\n\t"  // Pairwise add
             "vpadd.f32 d0, d0, d0\n\t"  // Pairwise add
-            "vadd.f32 %[sum], %[sum], s0\n\t"  // Add the accumulated sum
+            "vadd.f32 s0, s0, s0[0]\n\t"  // Add the accumulated sum to s0
+
+            "vmov %[sum], s0\n\t"       // Move the result back to sum
 
             : [sum] "+w" (sum)
             : [feature_in] "r" (feature_in), [weight] "r" (weight + out * FC_IN), [in_size] "r" (FC_IN)
-            : "r0", "r1", "r2", "r3", "r4", "q0", "q1", "q2", "memory"
+            : "r0", "r1", "r2", "q0", "q1", "q2", "memory"
         );
 
         feature_out[out] = sum;
     }
     return;
 }
-
-
 void Log_softmax(float *activation) {
     /*            DO NOT MODIFIY            */
     double max = activation[0];
