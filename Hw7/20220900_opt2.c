@@ -451,10 +451,11 @@ void ReLU(float *feature_in, int elem_num) {
         : "r2", "r3", "memory"
     );
 }
-/*
+
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     int fc_in = FC_IN;  // 매크로를 상수로 변환
 
+    #pragma omp parallel for
     for (int out = 0; out < FC_OUT; out++) {
         float sum = bias[out];
 
@@ -492,7 +493,7 @@ void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
         feature_out[out] = sum;
     }
 }
-*/
+/*
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
     /*          PUT YOUR CODE HERE          */
     // Linear input : float *feature_in
@@ -514,6 +515,7 @@ void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
         feature_out[out] = sum + bias[out];
     }
 }
+*/
 void Log_softmax(float *activation) {
     /*            DO NOT MODIFIY            */
     double max = activation[0];
