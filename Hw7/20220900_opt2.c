@@ -307,7 +307,7 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         }
     }
 }
-
+/*
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     #pragma omp parallel for collapse(3)
     for (int oc = 0; oc < out_C; oc++) {
@@ -341,6 +341,44 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
 
                 // Sum the elements of the NEON vector
                 sum_scalar += vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
+                feature_out[oc * out_H * out_W + oh * out_W + ow] = sum_scalar;
+            }
+        }
+    }
+}
+*/
+void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
+    #pragma omp parallel for collapse(3)
+    for (int oc = 0; oc < out_C; oc++) {
+        for (int oh = 0; oh < out_H; oh++) {
+            for (int ow = 0; ow < out_W; ow++) {
+                float32x4_t sum_vec = vdupq_n_f32(0.0f);
+                float sum_scalar = bias[oc];
+                int ih_base = oh * S;
+                int iw_base = ow * S;
+
+                for (int ic = 0; ic < in_C; ic++) {
+                    for (int kh = 0; kh < K; kh++) {
+                        for (int kw = 0; kw <= K - 4; kw += 4) {
+                            int ih = ih_base + kh;
+                            int iw = iw_base + kw;
+
+                            float32x4_t feature_vec = vld1q_f32(&feature_in[ic * in_H * in_W + ih * in_W + iw]);
+                            float32x4_t weight_vec = vld1q_f32(&weight[oc * in_C * K * K + ic * K * K + kh * K + kw]);
+                            
+                            sum_vec = vmlaq_f32(sum_vec, feature_vec, weight_vec);
+                        }
+                        // 처리되지 않은 나머지 요소를 수동으로 처리
+                        for (int kw = K - (K % 4); kw < K; kw++) {
+                            int ih = ih_base + kh;
+                            int iw = iw_base + kw;
+                            sum_scalar += feature_in[ic * in_H * in_W + ih * in_W + iw] * weight[oc * in_C * K * K + ic * K * K + kh * K + kw];
+                        }
+                    }
+                }
+
+                // Sum the elements of the NEON vector
+                sum_scalar += vaddvq_f32(sum_vec); // Use NEON intrinsic to sum the vector
                 feature_out[oc * out_H * out_W + oh * out_W + ow] = sum_scalar;
             }
         }
