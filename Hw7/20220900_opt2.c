@@ -347,6 +347,7 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
     }
 }
 */
+
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
     #pragma omp parallel for collapse(3)
     for (int oc = 0; oc < out_C; oc++) {
@@ -375,15 +376,15 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                             int iw = iw_base + kw;
 
                             asm volatile (
-                                "vldr.32 s0, [%[feature_in], %[offset_in]] \n\t"  // Load feature_in[ic * in_H * in_W + ih * in_W + iw]
-                                "vldr.32 s1, [%[weight], %[offset_wt]] \n\t"     // Load weight[oc * in_C * K * K + ic * K * K + kh * K + kw]
-                                "vmul.f32 s2, s0, s1 \n\t"                        // Multiply
-                                "vadd.f32 %q[sum], %q[sum], s2 \n\t"             // Add to sum_scalar
+                                "vldr.32 s0, [%[feature_in], %[offset_in], LSL #2] \n\t"  // Load feature_in[ic * in_H * in_W + ih * in_W + iw]
+                                "vldr.32 s1, [%[weight], %[offset_wt], LSL #2] \n\t"     // Load weight[oc * in_C * K * K + ic * K * K + kh * K + kw]
+                                "vmul.f32 s2, s0, s1 \n\t"                               // Multiply
+                                "vadd.f32 %q[sum], %q[sum], s2 \n\t"                    // Add to sum_scalar
                                 :
-                                : [feature_in] "r" (&feature_in[ic * in_H * in_W + ih * in_W + iw]),
-                                  [weight] "r" (&weight[oc * in_C * K * K + ic * K * K + kh * K + kw]),
-                                  [offset_in] "r" (0),
-                                  [offset_wt] "r" (0),
+                                : [feature_in] "r" (feature_in),
+                                  [weight] "r" (weight),
+                                  [offset_in] "r" (ic * in_H * in_W + ih * in_W + iw),
+                                  [offset_wt] "r" (oc * in_C * K * K + ic * K * K + kh * K + kw),
                                   [sum] "w" (sum_scalar)
                                 : "s0", "s1", "s2"
                             );
@@ -392,7 +393,7 @@ void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W
                 }
 
                 // Sum the elements of the NEON vector
-                sum_scalar += vaddvq_f32(sum_vec); // Use NEON intrinsic to sum the vector
+                sum_scalar += vgetq_lane_f32(sum_vec, 0) + vgetq_lane_f32(sum_vec, 1) + vgetq_lane_f32(sum_vec, 2) + vgetq_lane_f32(sum_vec, 3);
                 feature_out[oc * out_H * out_W + oh * out_W + ow] = sum_scalar;
             }
         }
