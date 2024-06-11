@@ -451,41 +451,45 @@ void ReLU(float *feature_in, int elem_num) {
         : "r2", "r3", "memory"
     );
 }
-
 void Linear(float *feature_in, float *feature_out, float *weight, float *bias) {
+    int fc_in = FC_IN;  // 매크로를 상수로 변환
+
     for (int out = 0; out < FC_OUT; out++) {
         float sum = bias[out];
 
-        asm volatile(
-            "mov r0, %[feature_in]\n\t"
-            "mov r1, %[weight]\n\t"
-            "vmov.f32 s0, %[sum]\n\t"        // Load sum into NEON register s0
-            "mov r2, #0\n\t"                 // Initialize loop counter
-            "veor q2, q2, q2\n\t"            // Clear q2 register
+        asm volatile (
+            "vmov.f32 s0, %[bias_out] \n\t"        // Move bias[out] to s0 (sum)
+            "mov r4, #0 \n\t"                      // Initialize inner loop index (in = 0)
 
-        "1:\n\t"
-            "vld1.32 {q0}, [r0]!\n\t"       // Load 4 elements from feature_in
-            "vld1.32 {q1}, [r1]!\n\t"       // Load 4 elements from weight
-            "vmla.f32 q2, q0, q1\n\t"       // Multiply and accumulate
-            "add r2, r2, #4\n\t"            // Increment loop counter by 4
-            "cmp r2, %[in_size]\n\t"        // Compare loop counter with FC_IN
-            "blt 1b\n\t"
+            "1: \n\t"                              // Inner loop label
+            "cmp r4, %[fc_in] \n\t"                // Compare in with FC_IN
+            "bge 2f \n\t"                          // Break if in >= FC_IN
 
-            "vpadd.f32 d4, d4, d5\n\t"      // Pairwise add
-            "vpadd.f32 d4, d4, d4\n\t"      // Pairwise add
+            "add r5, %[feature_in], r4, LSL #2 \n\t" // Calculate feature_in[in] address
+            "vldr.32 s1, [r5] \n\t"                // Load feature_in[in] into s1
 
-            "vadd.f32 s0, s0, s4[0]\n\t"    // Add the accumulated sum to s0
+            "mul r6, %[out], %[fc_in] \n\t"        // Calculate base index for weight (weight + out * FC_IN)
+            "add r6, r6, r4 \n\t"                  // Add in to the base index
+            "lsl r6, r6, #2 \n\t"                  // Multiply index by 4 to get byte offset
+            "add r6, %[weight], r6 \n\t"           // Calculate weight[out * FC_IN + in] address
+            "vldr.32 s2, [r6] \n\t"                // Load weight[out * FC_IN + in] into s2
 
-            "vmov.f32 %[sum], s0\n\t"       // Move the result back to sum
+            "vmul.f32 s3, s1, s2 \n\t"             // Multiply feature_in[in] * weight[out * FC_IN + in]
+            "vadd.f32 s0, s0, s3 \n\t"             // Add the result to sum
 
-            : [sum] "+w" (sum)
-            : [feature_in] "r" (feature_in), [weight] "r" (weight + out * FC_IN), [in_size] "r" (FC_IN)
-            : "r0", "r1", "r2", "q0", "q1", "q2", "d4", "memory"
+            "add r4, r4, #1 \n\t"                  // Increment inner loop index (in++)
+            "b 1b \n\t"                            // Repeat inner loop
+
+            "2: \n\t"                              // Inner loop end label
+            "vmov %[sum], s0 \n\t"                 // Move sum back to C variable
+
+            : [sum] "=r" (sum)                     // Output operands
+            : [bias_out] "r" (bias[out]), [feature_in] "r" (feature_in), [weight] "r" (weight), [out] "r" (out), [fc_in] "r" (fc_in)
+            : "r4", "r5", "r6", "s0", "s1", "s2", "s3", "memory"  // Clobbered registers
         );
 
         feature_out[out] = sum;
     }
-    return;
 }
 
 void Log_softmax(float *activation) {
