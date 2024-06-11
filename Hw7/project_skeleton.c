@@ -59,8 +59,7 @@ typedef struct _model {
     float fc_bias[FC_OUT];
 } model;
 
-int pin_num[] = { 29, 28, 23, 22, 21, 27, 26 };
-
+int pin_num[] = {0, 7, 3, 22, 23, 24, 25, 2};
 void resize_280_to_28(unsigned char* in, unsigned char* out);
 void Gray_scale(unsigned char* feature_in, unsigned char* feature_out);
 void Normalized(unsigned char* feature_in, float* feature_out);
