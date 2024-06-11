@@ -359,7 +359,7 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         : "r0", "r1", "r2", "r3", "r4", "r5", "memory"
     );
 }
-*/
+
 void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
     asm volatile(
         // Outer loop for channels (c)
@@ -441,6 +441,38 @@ void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
         : [feature_in] "r"(feature_in), [feature_out] "r"(feature_out), [C] "r"(C), [H] "r"(H), [W] "r"(W)
         : "r0", "r1", "r2", "r3", "r4", "r5", "memory"
     );
+}*/
+void Padding(float *feature_in, float *feature_out, int C, int H, int W) {
+    int padded_H = H + 2;
+    int padded_W = W + 2;
+
+    #pragma omp parallel for
+    for (int c = 0; c < C; c++) {
+        for (int h = 0; h < padded_H; h++) {
+            for (int w = 0; w < padded_W; w++) {
+                int out_index = c * padded_H * padded_W + h * padded_W + w;
+                if (h == 0 || h == padded_H - 1 || w == 0 || w == padded_W - 1) {
+                    __asm__ volatile (
+                        "mov r0, #0\n\t"
+                        "vdup.f32 d0, r0\n\t"
+                        "vstr d0, [%[out]]\n\t"
+                        :
+                        : [out] "r" (&feature_out[out_index])
+                        : "r0", "d0", "memory"
+                    );
+                } else {
+                    int in_index = c * H * W + (h - 1) * W + (w - 1);
+                    __asm__ volatile (
+                        "vldr d0, [%[in]]\n\t"
+                        "vstr d0, [%[out]]\n\t"
+                        :
+                        : [in] "r" (&feature_in[in_index]), [out] "r" (&feature_out[out_index])
+                        : "d0", "memory"
+                    );
+                }
+            }
+        }
+    }
 }
 /*
 void Conv_2d(float *feature_in, float *feature_out, int in_C, int in_H, int in_W, int out_C, int out_H, int out_W, int K, int S, float *weight, float *bias) {
