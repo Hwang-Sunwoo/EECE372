@@ -96,6 +96,7 @@ int main(int argc, char *argv[]) {
     fread(&net, sizeof(model), 1, weights);
 
     char *file;
+   
     if (atoi(argv[1]) == 0) {
     int fd;
     struct termios newtio;
@@ -124,12 +125,18 @@ int main(int argc, char *argv[]) {
     while (1) {
         memset(buf, 0, sizeof(buf));
         int cnt = read(fd, buf, sizeof(buf));
+        if (cnt < 0) {
+            fprintf(stderr, "failed to read from serial port: %s.\r\n", strerror(errno));
+            continue;
+        }
+
         buf[cnt] = '\0';
 
         if (cnt > 0) {
             if (buf[0] == 'c' || buf[0] == 'C') {
-                if (system("libcamera-still --width 640 --height 480 -o image.jpg -n") != 0) {
-                    fprintf(stderr, "Image capture failed.\n");
+                int ret = system("libcamera-still --width 640 --height 480 -o image.jpg -n");
+                if (ret != 0) {
+                    fprintf(stderr, "Image capture failed with return code: %d\n", ret);
                     continue;
                 }
 
@@ -153,8 +160,7 @@ int main(int argc, char *argv[]) {
     }
     close(fd);
 }
-
-    else if (atoi(argv[1]) == 1) {
+else if (atoi(argv[1]) == 1) {
         file = "example_1.bmp";
     }
     else if (atoi(argv[1]) == 2) {
