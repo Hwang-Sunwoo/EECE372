@@ -98,6 +98,7 @@ int main(int argc, char *argv[]) {
     char *file;
    
     if (atoi(argv[1]) == 0) {
+    /* 시리얼 통신 초기화 */
     int fd;
     struct termios newtio;
     char fbuf[1024];
@@ -105,8 +106,8 @@ int main(int argc, char *argv[]) {
 
     fd = open("/dev/serial0", O_RDWR | O_NOCTTY);
     if (fd < 0) {
-        fprintf(stderr, "failed to open port: %s.\r\n", strerror(errno));
-        printf("Make sure you are executing in sudo.\r\n");
+        fprintf(stderr, "포트를 여는데 실패했습니다: %s.\r\n", strerror(errno));
+        printf("sudo 권한으로 실행하고 있는지 확인하세요.\r\n");
         exit(1);
     }
     usleep(250000);
@@ -123,40 +124,14 @@ int main(int argc, char *argv[]) {
     tcsetattr(fd, TCSANOW, &newtio);
 
     while (1) {
-        memset(buf, 0, sizeof(buf));
         int cnt = read(fd, buf, sizeof(buf));
-        if (cnt < 0) {
-            fprintf(stderr, "failed to read from serial port: %s.\r\n", strerror(errno));
-            continue;
-        }
-
         buf[cnt] = '\0';
 
-        if (cnt > 0) {
-            if (buf[0] == 'c' || buf[0] == 'C') {
-                int ret = system("libcamera-still --width 640 --height 480 -o image.jpg -n");
-                if (ret != 0) {
-                    fprintf(stderr, "Image capture failed with return code: %d\n", ret);
-                    continue;
-                }
-
-                FILE *fp = fopen("image.jpg", "rb");
-                if (fp == NULL) {
-                    fprintf(stderr, "failed to open image file: %s.\r\n", strerror(errno));
-                    continue;
-                }
-
-                size_t bytesRead;
-                while ((bytesRead = fread(fbuf, sizeof(char), sizeof(fbuf), fp)) > 0) {
-                    if (write(fd, fbuf, bytesRead) < 0) {
-                        fprintf(stderr, "failed to write to serial port: %s.\r\n", strerror(errno));
-                        break;
-                    }
-                }
-                fclose(fp);
-                break; // 캡처 및 전송 후 루프 종료
-            }
-        }
+        if (buf[0] == 'c' || buf[0] == 'C') {
+            system("libcamera-still -e bmp --width 280 --height 280 -t 20000 -o image.bmp");
+            file = "image.bmp";
+            break;
+        } 
     }
     close(fd);
 }
